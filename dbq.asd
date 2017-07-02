@@ -13,6 +13,5 @@
                #:closer-mop
                #:anaphora
                #:cl-ppcre
-               #:local-time
-               #:info.read-eval-print.double-quote))
+               #:local-time))
 

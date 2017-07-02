@@ -1,7 +1,5 @@
 (in-package :dbq)
 
-(named-readtables:in-readtable info.read-eval-print.double-quote:|#"|)
-
 (defmethod save (record)
   (if (slot-boundp record 'id)
       (update record)
