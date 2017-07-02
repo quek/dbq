@@ -75,6 +75,21 @@
       x
       (list x)))
 
+(defgeneric to-table-name (x)
+  (:method (x)
+    (to-column-name x)))
+
+(defgeneric to-column-name (x)
+  (:method ((x string))
+    (with-output-to-string (out)
+      (write-char #\` out)
+      (loop for c across x
+            if (char= c #\`)
+              do (write-char #\` out)
+            do (write-char c out))
+      (write-char #\` out)))
+  (:method ((x symbol))
+    (to-column-name (substitute #\_ #\- (string-downcase x)))))
 
 (defgeneric to-sql-value (x)
   (:method ((x number))

@@ -13,6 +13,8 @@
    #:find-by
 
    ;;
+   #:fetch-one
+   #:fetch
    #:query
    #:select
    #:from

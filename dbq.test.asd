@@ -4,5 +4,5 @@
   :components ((:file "package")
                (:file "test"))
   :depends-on (:dbq
-               :fiveam))
+               :fiasco))
 

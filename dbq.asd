@@ -4,7 +4,8 @@
   :components ((:file "package")
                (:file "util")
                (:file "function")
-               (:file "dbq"))
+               (:file "dao")
+               (:file "query"))
   :depends-on (#:alexandria
                #:cl-mysql
                #:closer-mop
