@@ -86,7 +86,7 @@
   (:method ((x standard-class))
     (to-table-name (class-to-table-name x)))
   (:method ((x standard-object))
-    (to-table-name (class-of x)))))
+    (to-table-name (class-of x))))
 
 (defgeneric to-column-name (x)
   (:method ((x string))
@@ -125,6 +125,4 @@
 
 (defgeneric to-lisp-value (value column-type)
   (:method (value column-type)
-    value)
-  (:method (value (column-type (eql :datetime)))
-    (local-time:universal-to-timestamp value)))
+    value))

@@ -10,7 +10,14 @@
    #:execute
 
    ;;
+   #:id-mixin
+   #:created-at-mixin
+   #:updated-at-mixin
+   #:dao-mixin
    #:id
+   #:id-of
+   #:created-at
+   #:updated-at
    #:has-many
    #:save
    #:delete-from

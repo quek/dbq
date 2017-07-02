@@ -14,6 +14,19 @@
           (progn ,@body)
        (disconnect))))
 
+;; 9時間ずれた universal-time でかえってくるので
+(let ((offset (- (* 60 60
+                    (car (last (multiple-value-list
+                                (decode-universal-time (get-universal-time)))))))))
+  (defun datetime-string-to-local-time (string &optional len)
+    (declare (ignore len))
+    (if (equal "0000-00-00 00:00:00" string)
+        nil
+        (local-time:parse-timestring string :date-time-separator #\space :offset offset))))
+
+(setf (gethash :datetime cl-mysql:*type-map*) 'datetime-string-to-local-time)
+(setf (gethash :timestamp cl-mysql:*type-map*) 'datetime-string-to-local-time)
+
 (defun execute (sql)
   (print sql)
   (cl-mysql:query sql))
