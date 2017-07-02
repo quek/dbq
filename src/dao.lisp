@@ -50,3 +50,8 @@
                    (to-table-name record)
                    (update-set record)
                    (slot-value record 'id))))
+
+(defmethod delete-from (record)
+  (execute (format nil "delete from ~a where id=~d"
+                   (to-table-name record)
+                   (slot-value record 'id))))
