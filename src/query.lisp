@@ -34,6 +34,11 @@
         (append (query-builder-where *query-builder*) where))
   *query-builder*)
 
+(defun order (order)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf (query-builder-order *query-builder*) order)
+  *query-builder*)
+
 (defun limit (limit)
   (setf *query-builder* (copy-query-builder *query-builder*))
   (setf (query-builder-limit *query-builder*) limit)
@@ -56,6 +61,9 @@
                      (format t "~a=~a"
                              (to-column-name x)
                              (to-sql-value (pop where)))))))
+    (awhen (query-builder-order query-builder)
+      (write-string " order by ")
+      (write-string it))
     (when (query-builder-limit query-builder)
       (format t " limit ~d" (to-sql-value (query-builder-limit query-builder))))))
 
@@ -83,3 +91,10 @@
 (defun fetch-one (query &key class)
   (destructuring-bind ((rows columns)) (execute (sql (query query (limit 1))))
     (car (store class rows columns))))
+
+(defun fetch (query &key class)
+  (destructuring-bind ((rows columns)) (execute (sql query))
+    (store class rows columns)))
+
+(defun find-by (class &rest conditions)
+  (fetch-one (query class (apply #'where conditions)) :class class))

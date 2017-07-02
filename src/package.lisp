@@ -5,11 +5,15 @@
   (:export
    ;; function
    #:establish-connection
+   #:disconnect
+   #:with-connection
    #:execute
 
    ;;
    #:id
+   #:has-many
    #:save
+   #:delete-from
    #:find-by
 
    ;;

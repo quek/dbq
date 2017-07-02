@@ -1,9 +1,11 @@
 (asdf:defsystem :dbq
+  :version "0.0.1"
+  :license "BSD"
   :serial t
   :pathname "src/"
   :components ((:file "package")
                (:file "util")
-               (:file "function")
+               (:file "connection")
                (:file "dao")
                (:file "query"))
   :depends-on (#:alexandria

@@ -75,9 +75,18 @@
       x
       (list x)))
 
+(defun class-to-table-name (class)
+  (substitute #\_ #\- (pluralize (string-downcase (class-name class)))))
+
 (defgeneric to-table-name (x)
   (:method (x)
-    (to-column-name x)))
+    (to-column-name x))
+  (:method ((x symbol))
+    (to-table-name (find-class x)))
+  (:method ((x standard-class))
+    (to-table-name (class-to-table-name x)))
+  (:method ((x standard-object))
+    (to-table-name (class-of x)))))
 
 (defgeneric to-column-name (x)
   (:method ((x string))
