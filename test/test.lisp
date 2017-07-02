@@ -49,7 +49,8 @@
    (title :initarg :title :accessor title-of)
    (content :initarg :content :accessor content-of)
    (created-at :initform (local-time:now) :accessor created-at)
-   (updated-at :initform (local-time:now) :accessor updated-at)))
+   (updated-at :initform (local-time:now) :accessor updated-at)
+   (comments)))
 
 (fiasco:deftest save-and-find-by-id ()
   (let ((entry (make-instance 'entry :title "題名" :content "本文")))

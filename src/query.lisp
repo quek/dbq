@@ -63,24 +63,23 @@
   `(let ((*query-builder* (to-query-builder ,query-builder)))
      ,@body))
 
-(defun set-value (object slot-name value)
-  (let ((slot (find slot-name (sb-mop:class-slots (class-of object))
+(defun set-value (object value column-name column-type)
+  (let ((slot (find (to-column-name column-name) (sb-mop:class-slots (class-of object))
                     :test #'string-equal
-                    :key #'sb-mop:slot-definition-name)))
+                    :key (lambda (x) (to-column-name (sb-mop:slot-definition-name x))))))
     (if slot
-        (setf (slot-value object (sb-mop:slot-definition-name slot)) value)
-        (format t "no slot for ~a ~a" slot-name value))))
+        (setf (slot-value object (sb-mop:slot-definition-name slot))
+              (to-lisp-value value column-type))
+        (format t "no slot for ~a ~a" column-name value))))
 
 (defun store (class rows columns)
   (loop for row in rows
         collect (let ((object (make-instance class)))
                   (loop for value in row
                         for (column-name column-type) in columns
-                        do (set-value object column-name value))
+                        do (set-value object value column-name column-type))
                   object)))
 
 (defun fetch-one (query &key class)
   (destructuring-bind ((rows columns)) (execute (sql (query query (limit 1))))
     (car (store class rows columns))))
-
-

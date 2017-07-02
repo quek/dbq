@@ -113,3 +113,9 @@
                                             :min #\:
                                             :sec
                                             #\'))))
+
+(defgeneric to-lisp-value (value column-type)
+  (:method (value column-type)
+    value)
+  (:method (value (column-type (eql :datetime)))
+    (local-time:universal-to-timestamp value)))
