@@ -8,7 +8,8 @@
   (cl-mysql:disconnect))
 
 (defmacro with-connection  ((&key (host "localhost") user password database port) &body body)
-  `(progn
+  ;; TODO pool はスレッドごとじゃなくていいよね
+  `(let ((cl-mysql-system:*last-database* nil))
      (establish-connection :host ,host :user ,user :password ,password :database ,database :port ,port)
      (unwind-protect
           (progn ,@body)
