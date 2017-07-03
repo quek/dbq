@@ -3,11 +3,13 @@
 (defpackage :dbq
   (:use :cl :anaphora)
   (:export
-   ;; function
+   ;; connection
    #:establish-connection
    #:disconnect
    #:with-connection
    #:execute
+   #:with-transaction
+   #:rollback
 
    ;;
    #:id-mixin

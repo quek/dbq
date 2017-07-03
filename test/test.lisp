@@ -53,15 +53,30 @@
    (comments)
    (dbq:has-many :initform '(comments) :allocation :class)))
 
+;;(sb-mop:finalize-inheritance (find-class 'entry))
+
 (deftest save-and-find-by-id ()
   (let ((entry (make-instance 'entry :title "題名" :content "本文")))
     (is (save entry))
     (let ((id (id-of entry)))
       (is (numberp id))
-      (let ((entry (fetch-one (query 'entries (where :id id)) :class 'entry)))
+      (let ((entry (fetch-one (query 'entry (where :id id)) :class 'entry)))
         (describe entry)
         (is (equal id (id-of entry)))
         (is (equal "題名" (title-of entry)))
         (is (equal "本文" (content-of entry)))))))
+
+(deftest transaction-test ()
+  (let ((entry (make-instance 'entry :title "a" :content "b")))
+    (save entry)
+    (with-transaction
+      (setf (title-of entry) "AA")
+      (save entry)
+      (rollback))
+    (is (string= "a" (title-of (find-by 'entry :id (id-of entry)))))
+    (with-transaction
+      (setf (title-of entry) "AA")
+      (save entry))
+    (is (string= "AA" (title-of (find-by 'entry :id (id-of entry)))))))
 
 (run-package-tests :interactive t)

@@ -31,3 +31,19 @@
 (defun execute (sql)
   (print sql)
   (cl-mysql:query sql))
+
+(define-condition rollback-error (error) ())
+
+(defun rollback ()
+  (error 'rollback-error))
+
+(defmacro with-transaction (&body body)
+  (let ((statement (gensym)))
+    `(let ((,statement "rollback"))
+       (execute "begin")
+       (unwind-protect
+            (handler-case (progn
+                            ,@body
+                            (setf ,statement "commit"))
+              (rollback-error ()))
+         (execute ,statement)))))
