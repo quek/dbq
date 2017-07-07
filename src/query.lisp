@@ -16,7 +16,7 @@
   (:method ((x query-builder))
     x)
   (:method ((x symbol))
-    (make-query-builder :from (to-table-name x))))
+    (make-query-builder :from x)))
 
 (defun select (select)
   (setf *query-builder* (copy-query-builder *query-builder*))
@@ -49,7 +49,7 @@
     (format t
             "select ~a from ~a"
             (query-builder-select query-builder)
-            (query-builder-from query-builder))
+            (to-table-name (query-builder-from query-builder)))
     (let ((where (query-builder-where query-builder)))
       (when where
           (write-string " where ")
@@ -69,7 +69,8 @@
 
 (defmacro query (query-builder &body body)
   `(let ((*query-builder* (to-query-builder ,query-builder)))
-     ,@body))
+     ,@body
+     *query-builder*))
 
 (defun set-value (object value column-name column-type)
   (let ((slot (find (to-column-name column-name) (sb-mop:class-slots (class-of object))
@@ -92,7 +93,7 @@
   (destructuring-bind ((rows columns)) (execute (sql (query query (limit 1))))
     (car (store class rows columns))))
 
-(defun fetch (query &key class)
+(defun fetch (query &key (class (query-builder-from query)))
   (destructuring-bind ((rows columns)) (execute (sql query))
     (store class rows columns)))
 
