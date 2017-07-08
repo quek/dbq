@@ -5,6 +5,7 @@
 (defstruct query-builder
   (select "*")
   from
+  join
   where
   order
   having
@@ -28,6 +29,12 @@
   (setf (query-builder-from *query-builder*) from)
   *query-builder*)
 
+(defun join (&rest join)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf (query-builder-join *query-builder*)
+        (append (query-builder-join *query-builder*) join))
+  *query-builder*)
+
 (defun where (&rest where)
   (setf *query-builder* (copy-query-builder *query-builder*))
   (setf (query-builder-where *query-builder*)
@@ -45,13 +52,19 @@
   *query-builder*)
 
 (defun sql (query-builder)
-  (with-output-to-string (*standard-output*)
-    (format t
-            "select ~a from ~a"
-            (query-builder-select query-builder)
-            (to-table-name (query-builder-from query-builder)))
-    (let ((where (query-builder-where query-builder)))
-      (when where
+  (let ((class-symbol (query-builder-from query-builder)))
+    (with-output-to-string (*standard-output*)
+      (format t
+              "select ~a from ~a"
+              (query-builder-select query-builder)
+              (to-table-name (query-builder-from query-builder)))
+      (loop for join in (query-builder-join query-builder)
+            for join-clause = (hbtm-join-clause class-symbol join)
+            if join-clause
+              do (write-char #\space)
+                 (write-string join-clause))
+      (let ((where (query-builder-where query-builder)))
+        (when where
           (write-string " where ")
           (loop with and = ""
                 while where
@@ -61,11 +74,11 @@
                      (format t "~a=~a"
                              (to-column-name x)
                              (to-sql-value (pop where)))))))
-    (awhen (query-builder-order query-builder)
-      (write-string " order by ")
-      (write-string it))
-    (when (query-builder-limit query-builder)
-      (format t " limit ~d" (to-sql-value (query-builder-limit query-builder))))))
+      (awhen (query-builder-order query-builder)
+        (write-string " order by ")
+        (write-string it))
+      (when (query-builder-limit query-builder)
+        (format t " limit ~d" (to-sql-value (query-builder-limit query-builder)))))))
 
 (defmacro query (query-builder &body body)
   `(let ((*query-builder* (to-query-builder ,query-builder)))

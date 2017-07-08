@@ -90,13 +90,7 @@
 
 (defgeneric to-column-name (x)
   (:method ((x string))
-    (with-output-to-string (out)
-      (write-char #\` out)
-      (loop for c across x
-            if (char= c #\`)
-              do (write-char #\` out)
-            do (write-char c out))
-      (write-char #\` out)))
+    x)
   (:method ((x symbol))
     (to-column-name (substitute #\_ #\- (string-downcase x)))))
 
@@ -126,3 +120,6 @@
 (defgeneric to-lisp-value (value column-type)
   (:method (value column-type)
     value))
+
+(defun slot-value-or-nil (object slot)
+  (ignore-errors (slot-value object slot)))

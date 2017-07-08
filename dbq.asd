@@ -7,6 +7,7 @@
                (:file "util")
                (:file "connection")
                (:file "dao")
+               (:file "hbtm")
                (:file "query"))
   :depends-on (#:alexandria
                #:cl-mysql

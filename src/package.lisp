@@ -25,6 +25,8 @@
    #:delete-from
    #:find-by
 
+   #:def-hbtm
+
    ;;
    #:fetch-one
    #:fetch
@@ -37,4 +39,5 @@
    #:group
    #:offset
    #:limit
+   #:sql
    ))
