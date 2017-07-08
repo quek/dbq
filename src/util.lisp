@@ -120,6 +120,3 @@
 (defgeneric to-lisp-value (value column-type)
   (:method (value column-type)
     value))
-
-(defun slot-value-or-nil (object slot)
-  (ignore-errors (slot-value object slot)))
