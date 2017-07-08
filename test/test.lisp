@@ -51,7 +51,7 @@
    (comments :accessor comments-of)
    (categories :accessor categories-of)))
 
-(def-hbtm :class entry :slot categories :join-clause "
+(def-hbtm :class entry :slot categories :other-class category :join-clause "
 inner join category_entries on category_entries.entry_id=entries.id
 inner join categories on categories.id = category_entries.category_id
 ")
@@ -84,14 +84,20 @@ inner join categories on categories.id = category_entries.category_id
     (is (string= "AA" (title-of (find-by 'entry :id (id-of entry)))))))
 
 (deftest hbtm-test ()
-  (let ((category (make-instance 'category :name "プログラミング"))
+  (let ((category1 (make-instance 'category :name "プログラミング"))
+        (category2 (make-instance 'category :name "読書"))
         (entry (make-instance 'entry :title "題名" :content "本文")))
-    (save category)
+    (save category1)
+    (save category2)
     (save entry)
     (execute (format nil "insert into category_entries values(~d, ~d)"
-                     (id-of category) (id-of entry)))
+                     (id-of category1) (id-of entry)))
+    (execute (format nil "insert into category_entries values(~d, ~d)"
+                     (id-of category2) (id-of entry)))
     (is (= (id-of entry)
            (id-of (fetch-one (query 'entry (join 'categories)
-                               (where :categories.id (id-of category)))))))))
+                               (where :categories.id (id-of category1)))))))
+    (is (equal (list (id-of category1) (id-of category2))
+               (mapcar #'id-of (categories-of entry))))))
 
 (run-package-tests :interactive t)
