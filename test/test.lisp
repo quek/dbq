@@ -26,34 +26,38 @@
   `updated_at` datetime not null,
   primary key (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-  (execute "drop table if exists `tags`")
-  (execute "create table `tags` (
+  (execute "drop table if exists `categories`")
+  (execute "create table categories (
   `id` int(11) not null auto_increment,
-  `name` varchar(100) not null,
+  `name` varchar(255) not null,
   `created_at` datetime not null,
+  `updated_at` datetime not null,
   primary key (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-  (execute "drop table if exists `taggings`")
-  (execute "create table `taggings` (
-  `id` int(11) not null auto_increment,
-  `tag_id` int(11) not null,
-  `taggable_id` int(11) not null,
-  `taggable_type` varchar(255) not null,
-  `created_at` datetime not null,
-  primary key (`id`)
+  (execute "drop table if exists `category_entries`")
+  (execute "create table `category_entries` (
+  `category_id` int not null,
+  `entry_id` int not null,
+  primary key (`category_id`, `entry_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
   )
 
-(defclass entry ()
-  ((dbq:id :accessor id-of)
+(defclass entry (dao-mixin)
+  ((id :accessor id-of)
    (title :initarg :title :accessor title-of)
    (content :initarg :content :accessor content-of)
    (created-at :initform (local-time:now) :accessor created-at)
    (updated-at :initform (local-time:now) :accessor updated-at)
-   (comments)
-   (dbq:has-many :initform '(comments) :allocation :class)))
+   (comments :accessor comments-of)
+   (categories :accessor categories-of)))
 
-;;(sb-mop:finalize-inheritance (find-class 'entry))
+(def-hbtm :class entry :slot categories :join-clause "
+inner join category_entries on category_entries.entry_id=entries.id
+inner join categories on categories.id = category_entries.category_id
+")
+
+(defclass category (dao-mixin)
+  ((name :initarg :name :accessor name-sf)))
 
 (deftest save-and-find-by-id ()
   (let ((entry (make-instance 'entry :title "題名" :content "本文")))
@@ -78,5 +82,16 @@
       (setf (title-of entry) "AA")
       (save entry))
     (is (string= "AA" (title-of (find-by 'entry :id (id-of entry)))))))
+
+(deftest hbtm-test ()
+  (let ((category (make-instance 'category :name "プログラミング"))
+        (entry (make-instance 'entry :title "題名" :content "本文")))
+    (save category)
+    (save entry)
+    (execute (format nil "insert into category_entries values(~d, ~d)"
+                     (id-of category) (id-of entry)))
+    (is (= (id-of entry)
+           (id-of (fetch-one (query 'entry (join 'categories)
+                               (where :categories.id (id-of category)))))))))
 
 (run-package-tests :interactive t)

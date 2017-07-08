@@ -3,7 +3,7 @@
 (defvar *query-builder* nil)
 
 (defstruct query-builder
-  (select "*")
+  select
   from
   join
   where
@@ -54,10 +54,13 @@
 (defun sql (query-builder)
   (let ((class-symbol (query-builder-from query-builder)))
     (with-output-to-string (*standard-output*)
+      (write-string "select ")
+      (aif (query-builder-select query-builder)
+           (write-string it)
+           (format t "distinct ~a.*" (to-table-name class-symbol)))
       (format t
-              "select ~a from ~a"
-              (query-builder-select query-builder)
-              (to-table-name (query-builder-from query-builder)))
+              " from ~a"
+              (to-table-name class-symbol))
       (loop for join in (query-builder-join query-builder)
             for join-clause = (hbtm-join-clause class-symbol join)
             if join-clause
@@ -102,7 +105,7 @@
                         do (set-value object value column-name column-type))
                   object)))
 
-(defun fetch-one (query &key class)
+(defun fetch-one (query &key (class (query-builder-from query)))
   (destructuring-bind ((rows columns)) (execute (sql (query query (limit 1))))
     (car (store class rows columns))))
 
