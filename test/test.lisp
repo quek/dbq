@@ -49,9 +49,9 @@
    (created-at :initform (local-time:now) :accessor created-at)
    (updated-at :initform (local-time:now) :accessor updated-at)
    (comments :accessor comments-of)
-   (categories :accessor categories-of)))
+   (categories :initarg :categories :accessor categories-of)))
 
-(def-hbtm :class entry :slot categories :other-class category :join-clause "
+(def-hbtm :class entry :slot categories :other-class category :table "category_entries" :join-clause "
 inner join category_entries on category_entries.entry_id=entries.id
 inner join categories on categories.id = category_entries.category_id
 ")
@@ -99,5 +99,15 @@ inner join categories on categories.id = category_entries.category_id
                                (where :categories.id (id-of category1)))))))
     (is (equal (list (id-of category1) (id-of category2))
                (mapcar #'id-of (categories-of entry))))))
+
+(deftest hbtm-insert-test ()
+  (let ((category1 (make-instance 'category :name "プログラミング"))
+        (category2 (make-instance 'category :name "読書")))
+    (let ((entry (make-instance 'entry :title "題名" :content "本文"
+                                       :categories (list category1 category2))))
+      (save entry)
+      (let ((entry (find-by  'entry :id (id-of entry))))
+        (is (equal (list (id-of category1) (id-of category2))
+                   (mapcar #'id-of (categories-of entry))))))))
 
 (run-package-tests :interactive t)

@@ -12,6 +12,8 @@
 (defclass dao-mixin (id-mixin created-at-mixin updated-at-mixin)
   ())
 
+(defun persistedp (record)
+  (slot-boundp record 'id))
 
 (defmethod save (record)
   (if (slot-boundp record 'id)
@@ -19,23 +21,30 @@
       (create record)))
 
 (defun column-slots (record)
-  (loop with has-many = (ignore-errors (slot-value record 'has-many))
-        for slot in (sb-pcl:class-slots (class-of record))
-        if (and (eq (sb-pcl:slot-definition-allocation slot) :instance)
-                (not (member (sb-pcl:slot-definition-name slot) has-many)))
+  (loop for slot in (sb-pcl:class-slots (class-of record))
+        if (eq (sb-pcl:slot-definition-allocation slot) :instance)
           collect slot))
 
-(defun insert-columns (record)
-  (loop for slot in (column-slots record)
-        for slot-name = (sb-pcl:slot-definition-name slot)
-        if (and (slot-boundp record slot-name) (string-not-equal "id" slot-name))
-          collect (to-column-name slot-name)))
+(defun hbtm-slot-p (record slot-name)
+  (hbtm-join-clause (class-name (class-of record)) slot-name))
 
-(defun insert-values (record)
+(defun normal-column-p (record slot-name)
+  (not (hbtm-slot-p record slot-name)))
+
+(defun insert-columns-values (record)
   (loop for slot in (column-slots record)
         for slot-name = (sb-pcl:slot-definition-name slot)
-        if (and (slot-boundp record slot-name) (string-not-equal "id" slot-name))
-          collect (to-sql-value (slot-value record slot-name))))
+        if (and (slot-boundp record slot-name)
+                (string-not-equal "id" slot-name)
+                (normal-column-p record slot-name))
+          collect (to-column-name slot-name) into columns
+          and
+            collect (to-sql-value (slot-value record slot-name)) into values
+        else if (and (hbtm-slot-p record slot-name)
+                     (slot-boundp record slot-name))
+               collect slot-name into hbtms
+        finally (return (values columns values hbtms))))
+
 
 (defun update-set (record)
   (loop for slot in (column-slots record)
@@ -46,14 +55,21 @@
           append (list (to-column-name slot-name)
                        (to-sql-value (slot-value record slot-name)))))
 
+(defun insert-sql (record)
+  (multiple-value-bind (columns values hbtms) (insert-columns-values record)
+    (declare (ignore hbtms))
+    (format nil "insert into ~a (~{~a~^, ~}) values (~{~a~^, ~})"
+            (to-table-name record)
+            columns
+            values)))
+
 (defmethod create (record)
   (destructuring-bind (_a (((id)) _b))
-      (execute (format nil "insert into ~a (~{~a~^, ~}) values (~{~a~^, ~}); select last_insert_id()"
-                       (to-table-name record)
-                       (insert-columns record)
-                       (insert-values record)))
+      (execute (concatenate 'string (insert-sql record) "; select last_insert_id();"))
     (declare (ignore _a _b))
-    (setf (slot-value record 'id) id)))
+    (setf (slot-value record 'id) id))
+  (insert-hbtm record)
+  record)
 
 (defmethod create :before ((record created-at-mixin))
   (unless (slot-boundp record 'created-at)
