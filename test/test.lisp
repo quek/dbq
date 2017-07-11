@@ -47,12 +47,12 @@
    (content :initarg :content :accessor content-of)
    (created-at :initform (local-time:now) :accessor created-at)
    (updated-at :initform (local-time:now) :accessor updated-at)
-   (comments :accessor comments-of)
+   (comments :initarg :comments :accessor comments-of)
    (categories :initarg :categories :accessor categories-of)))
 
 (defclass comment (dao-mixin)
   ((entry-id :initarg :entry-id :accessor entry-id-of)
-   (content :initarg :context :accessor content-of)))
+   (content :initarg :content :accessor content-of)))
 
 (def-has-many :class entry :slot comments :other-class comment)
 (def-hbtm :class entry :slot categories :other-class category :table "category_entries")
@@ -107,8 +107,18 @@
     (let ((entry (make-instance 'entry :title "題名" :content "本文"
                                        :categories (list category1 category2))))
       (save entry)
-      (let ((entry (find-by  'entry :id (id-of entry))))
+      (let ((entry (find-by 'entry :id (id-of entry))))
         (is (equal (list (id-of category1) (id-of category2))
                    (mapcar #'id-of (categories-of entry))))))))
+
+(deftest has-many-insert-test ()
+  (let ((comment1 (make-instance 'comment :content "こんにちは"))
+        (comment2 (make-instance 'comment :content "こんばんは")))
+    (let ((entry (make-instance 'entry :title "題名" :content "本文"
+                                       :comments (list comment1 comment2))))
+      (save entry)
+      (let ((entry (find-by 'entry :id (id-of entry))))
+        (is (equal (list (id-of comment1) (id-of comment2))
+                   (mapcar #'id-of (comments-of entry))))))))
 
 (run-package-tests :interactive t)
