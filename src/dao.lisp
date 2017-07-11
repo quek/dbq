@@ -35,9 +35,9 @@
         if (and (slot-boundp record slot-name)
                 (string-not-equal "id" slot-name)
                 (normal-column-p record slot-name))
-          collect (to-column-name slot-name) into columns
+          collect slot-name into columns
           and
-            collect (to-sql-value (slot-value record slot-name)) into values
+            collect (slot-value record slot-name) into values
         finally (return (values columns values))))
 
 
@@ -47,13 +47,13 @@
         if (and (slot-boundp record slot-name)
                 (not (eq 'id slot-name))
                 (not (eq 'created-at slot-name)))
-          append (list (to-column-name slot-name)
-                       (to-sql-value (slot-value record slot-name)))))
+          append (list slot-name
+                       (slot-value record slot-name))))
 
 (defun insert-sql (record)
   (multiple-value-bind (columns values) (insert-columns-values record)
-    (format nil "insert into ~a (~{~a~^, ~}) values (~{~a~^, ~})"
-            (to-table-name record)
+    (format nil "insert into ~/dbq::tbl/ (~{~/dbq::col/~^, ~}) values (~{~/dbq::val/~^, ~})"
+            record
             columns
             values)))
 
@@ -74,8 +74,8 @@
     (setf (slot-value record 'updated-at) (local-time:now))))
 
 (defmethod update (record)
-  (execute (format nil "update ~a set ~{~a=~a~^, ~} where id=~d"
-                   (to-table-name record)
+  (execute (format nil "update ~/dbq::tbl/ set ~{~/dbq::col/=~/dbq::val/~^, ~} where id=~/dbq::val/"
+                   record
                    (update-set record)
                    (slot-value record 'id))))
 
@@ -83,6 +83,6 @@
   (setf (slot-value record 'updated-at) (local-time:now)))
 
 (defmethod delete-from (record)
-  (execute (format nil "delete from ~a where id=~d"
-                   (to-table-name record)
+  (execute (format nil "delete from ~/dbq::tbl/ where id=~/dbq::val/"
+                   record
                    (slot-value record 'id))))
