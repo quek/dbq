@@ -14,7 +14,7 @@
            '(:join-clause ,join-clause :other-class ,other-class :table ,table))
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
        (fetch (query ',class
-                (select ,(str "distinct " (string-downcase slot) ".*"))
+                (select ,(str "distinct " (to-column-name slot) ".*"))
                 (join ',slot) (where ,(str (to-table-name class) ".id") (id-of instance)))
               :class ',other-class))))
 

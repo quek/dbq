@@ -8,6 +8,7 @@
                (:file "connection")
                (:file "dao")
                (:file "hbtm")
+               (:file "has-many")
                (:file "query"))
   :depends-on (#:alexandria
                #:cl-mysql
