@@ -5,6 +5,7 @@
   :pathname "src/"
   :components ((:file "package")
                (:file "util")
+               (:file "format")
                (:file "connection")
                (:file "dao")
                (:file "hbtm")

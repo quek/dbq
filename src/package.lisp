@@ -26,6 +26,7 @@
    #:find-by
 
    #:def-hbtm
+   #:def-has-many
 
    ;;
    #:fetch-one
