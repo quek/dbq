@@ -18,6 +18,7 @@
    #:dao-mixin
    #:id
    #:id-of
+   #:id=
    #:created-at
    #:updated-at
    #:has-many
@@ -27,6 +28,7 @@
 
    #:def-hbtm
    #:def-has-many
+   #:def-belongs-to
 
    ;;
    #:fetch-one

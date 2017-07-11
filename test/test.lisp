@@ -13,6 +13,7 @@
   `id` int(11) not null auto_increment,
   `title` varchar(100) not null,
   `content` text not null,
+  `user_id` int,
   `created_at` datetime not null,
   `updated_at` datetime not null,
   primary key (`id`)
@@ -40,13 +41,20 @@
   `entry_id` int not null,
   primary key (`category_id`, `entry_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+  (execute "drop table if exists `users`")
+  (execute "create table `users` (
+  `id` int(11) not null auto_increment,
+  `name` varchar(100) not null,
+  `created_at` datetime not null,
+  `updated_at` datetime not null,
+  primary key (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
   )
 
 (defclass entry (dao-mixin)
   ((title :initarg :title :accessor title-of)
    (content :initarg :content :accessor content-of)
-   (created-at :initform (local-time:now) :accessor created-at)
-   (updated-at :initform (local-time:now) :accessor updated-at)
+   (user-id :initarg :user-id :accessor user-id-of)
    (comments :initarg :comments :accessor comments-of)
    (categories :initarg :categories :accessor categories-of)))
 
@@ -54,11 +62,15 @@
   ((entry-id :initarg :entry-id :accessor entry-id-of)
    (content :initarg :content :accessor content-of)))
 
-(def-has-many :class entry :slot comments :other-class comment)
-(def-hbtm :class entry :slot categories :other-class category :table "category_entries")
-
 (defclass category (dao-mixin)
   ((name :initarg :name :accessor name-sf)))
+
+(defclass user (dao-mixin)
+  ((name :initarg :name :accessor name-of)))
+
+(def-has-many :class entry :slot comments :other-class comment)
+(def-hbtm :class entry :slot categories :other-class category :table "category_entries")
+(def-belongs-to :class entry :other-class user)
 
 (deftest save-and-find-by-id ()
   (let ((entry (make-instance 'entry :title "題名" :content "本文")))
@@ -102,23 +114,31 @@
                (mapcar #'id-of (categories-of entry))))))
 
 (deftest hbtm-insert-test ()
-  (let ((category1 (make-instance 'category :name "プログラミング"))
-        (category2 (make-instance 'category :name "読書")))
-    (let ((entry (make-instance 'entry :title "題名" :content "本文"
-                                       :categories (list category1 category2))))
-      (save entry)
-      (let ((entry (find-by 'entry :id (id-of entry))))
-        (is (equal (list (id-of category1) (id-of category2))
-                   (mapcar #'id-of (categories-of entry))))))))
+  (let* ((category1 (make-instance 'category :name "プログラミング"))
+         (category2 (make-instance 'category :name "読書"))
+         (entry (make-instance 'entry :title "題名" :content "本文"
+                                      :categories (list category1 category2))))
+    (save entry)
+    (let ((entry (find-by 'entry :id (id-of entry))))
+      (is (equal (list (id-of category1) (id-of category2))
+                 (mapcar #'id-of (categories-of entry)))))
+    (is (id= entry
+             (fetch-one (query 'entry
+                          (join 'categories)
+                          (where :categories.id (id-of category1))))))))
 
 (deftest has-many-insert-test ()
-  (let ((comment1 (make-instance 'comment :content "こんにちは"))
-        (comment2 (make-instance 'comment :content "こんばんは")))
-    (let ((entry (make-instance 'entry :title "題名" :content "本文"
-                                       :comments (list comment1 comment2))))
-      (save entry)
-      (let ((entry (find-by 'entry :id (id-of entry))))
-        (is (equal (list (id-of comment1) (id-of comment2))
-                   (mapcar #'id-of (comments-of entry))))))))
+  (let* ((comment1 (make-instance 'comment :content "こんにちは"))
+         (comment2 (make-instance 'comment :content "こんばんは"))
+         (entry (make-instance 'entry :title "題名" :content "本文"
+                                      :comments (list comment1 comment2))))
+    (save entry)
+    (let ((entry (find-by 'entry :id (id-of entry))))
+      (is (equal (list (id-of comment1) (id-of comment2))
+                 (mapcar #'id-of (comments-of entry)))))
+    (is (id= entry
+             (fetch-one (query 'entry
+                          (join 'comments)
+                          (where :comments.id (id-of comment1))))))))
 
 (run-package-tests :interactive t)
