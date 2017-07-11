@@ -42,8 +42,7 @@
     `(let ((,statement "rollback"))
        (execute "begin")
        (unwind-protect
-            (handler-case (progn
-                            ,@body
+            (handler-case (prog1 (progn ,@body)
                             (setf ,statement "commit"))
               (rollback-error ()))
          (execute ,statement)))))
