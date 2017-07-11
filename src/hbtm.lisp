@@ -44,7 +44,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
 (defun hbtm-other-class (class slot)
   (hbtm-config class slot :other-class))
 
-(defun insert-hbtm (record)
+(defun update-hbtm (record)
   (loop with class = (class-name (class-of record))
         for slot in (hbtm-slots class)
         if (slot-boundp record slot)

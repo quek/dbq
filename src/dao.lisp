@@ -16,9 +16,11 @@
   (slot-boundp record 'id))
 
 (defmethod save (record)
-  (if (slot-boundp record 'id)
-      (update record)
-      (create record)))
+  (prog1 (if (slot-boundp record 'id)
+             (update record)
+             (create record))
+    (update-hbtm record)
+    (update-has-many record)))
 
 (defun column-slots (record)
   (loop for slot in (sb-pcl:class-slots (class-of record))
@@ -46,7 +48,8 @@
         for slot-name = (sb-pcl:slot-definition-name slot)
         if (and (slot-boundp record slot-name)
                 (not (eq 'id slot-name))
-                (not (eq 'created-at slot-name)))
+                (not (eq 'created-at slot-name))
+                (normal-column-p record slot-name))
           append (list slot-name
                        (slot-value record slot-name))))
 
@@ -62,7 +65,6 @@
       (execute (concatenate 'string (insert-sql record) "; select last_insert_id();"))
     (declare (ignore _a _b))
     (setf (slot-value record 'id) id))
-  (insert-hbtm record)
   record)
 
 (defmethod create :before ((record created-at-mixin))
