@@ -43,14 +43,18 @@
   )
 
 (defclass entry (dao-mixin)
-  ((id :accessor id-of)
-   (title :initarg :title :accessor title-of)
+  ((title :initarg :title :accessor title-of)
    (content :initarg :content :accessor content-of)
    (created-at :initform (local-time:now) :accessor created-at)
    (updated-at :initform (local-time:now) :accessor updated-at)
    (comments :accessor comments-of)
    (categories :initarg :categories :accessor categories-of)))
 
+(defclass comment (dao-mixin)
+  ((entry-id :initarg :entry-id :accessor entry-id-of)
+   (content :initarg :context :accessor content-of)))
+
+(def-has-many :class entry :slot comments :other-class comment)
 (def-hbtm :class entry :slot categories :other-class category :table "category_entries")
 
 (defclass category (dao-mixin)

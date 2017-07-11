@@ -120,3 +120,6 @@
 (defgeneric to-lisp-value (value column-type)
   (:method (value column-type)
     value))
+
+(defun to-foreign-key-column (x)
+  (str (to-column-name x) "_id"))

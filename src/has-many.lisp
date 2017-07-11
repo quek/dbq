@@ -4,11 +4,11 @@
 
 (defmacro def-has-many (&key class slot other-class
                           (foreign-key (str (to-column-name class) "_id"))
-                          (join-clause (format nil "inner join ~a on ~a.~a=~a.idn"
-                                               (to-table-name other-class)
-                                               (to-table-name other-class)
-                                               foreign-key
-                                               (to-table-name class))))
+                          (join-clause
+                           (format
+                            nil
+                            "inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
+                            other-class other-class foreign-key class)))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *has-many*)

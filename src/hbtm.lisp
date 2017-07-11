@@ -4,9 +4,9 @@
 
 (defmacro def-hbtm (&key class slot other-class table
                       (join-clause
-                       (format
-                        nil
-                        "inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
+                       (format nil "~
+inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id ~
+inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
                         table
                         table (str (to-column-name class) "_id") class
                         other-class other-class
@@ -18,8 +18,8 @@
            '(:join-clause ,join-clause :other-class ,other-class :table ,table))
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
        (fetch (query ',class
-                (select ,(str "distinct " (to-column-name slot) ".*"))
-                (join ',slot) (where ,(str (to-table-name class) ".id") (id-of instance)))
+                (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
+                (join ',slot) (where ,(format nil "~/dbq::tbl/.id"  class) (id-of instance)))
               :class ',other-class))))
 
 (defun hbtm-slot-p (record slot)
@@ -48,17 +48,18 @@
   (loop with class = (class-name (class-of record))
         for slot in (hbtm-slots class)
         if (slot-boundp record slot)
-          do (execute (format nil "delete from ~a where ~a_id=~d"
+          do (execute (format nil "delete from ~/dbq::tbl/ where ~/dbq::col/=~/dbq::val/"
                               (hbtm-table class slot)
-                              (to-column-name class)
-                              (to-sql-value (id-of record))))
+                              (str (to-column-name class) "_id")
+                              (id-of record)))
              (loop for x in (slot-value record slot)
                    unless (persistedp x)
                      do (save x)
-                        (execute (format nil "insert into ~a (~a_id, ~a_id) values(~d, ~d)"
+                        (execute (format nil "~
+insert into ~/dbq::tbl/ (~/dbq::col/, ~/dbq::col/) values(~/dbq::val/, ~/dbq::val/)"
                                          (hbtm-table class slot)
-                                         (to-column-name class)
-                                         (to-column-name (hbtm-other-class class slot))
-                                         (to-sql-value (id-of record))
-                                         (to-sql-value (id-of x)))))))
+                                         (to-foreign-key-column class)
+                                         (to-foreign-key-column (hbtm-other-class class slot))
+                                         (id-of record)
+                                         (id-of x))))))
 
