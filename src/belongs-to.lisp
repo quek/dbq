@@ -21,3 +21,10 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
      (defmethod (setf ,method) (value (record ,class))
        (setf (slot-value record ',foreign-key-slot) (id-of value))
        value)))
+
+(defun belongs-to-config (class name key)
+  (awhen (gethash class *belongs-to*)
+    (getf (gethash name it) key)))
+
+(defun belongs-to-join-clause (class name)
+  (belongs-to-config class name :join-clause))

@@ -141,4 +141,16 @@
                           (join 'comments)
                           (where :comments.id (id-of comment1))))))))
 
+(deftest belongs-test ()
+  (let* ((user (aprog1 (make-instance 'user :name "こねら")
+                 (save it)))
+         (entry (make-instance 'entry :title "題名" :content "本文")))
+    (setf (user-of entry) user)
+    (is (= (id-of user) (user-id-of entry)))
+    (save entry)
+    (is (id= entry
+             (fetch-one (query 'entry
+                          (join 'user)
+                          (where :users.id (id-of user))))))))
+
 (run-package-tests :interactive t)

@@ -63,7 +63,8 @@
               (to-table-name class-symbol))
       (loop for join in (query-builder-join query-builder)
             for join-clause = (or (hbtm-join-clause class-symbol join)
-                                  (has-many-join-clause class-symbol join))
+                                  (has-many-join-clause class-symbol join)
+                                  (belongs-to-join-clause class-symbol join))
             if join-clause
               do (write-char #\space)
                  (write-string join-clause))
