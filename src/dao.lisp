@@ -79,7 +79,8 @@
     (setf (slot-value record 'updated-at) (local-time:now))))
 
 (defmethod update (record)
-  (execute (format nil "update ~/dbq::tbl/ set ~{~/dbq::col/=~/dbq::val/~^, ~} where id=~/dbq::val/"
+  (execute (format nil "~
+update ~/dbq::tbl/ set ~{~/dbq::col/=~/dbq::val/~^, ~} where id=~/dbq::val/"
                    record
                    (update-set record)
                    (slot-value record 'id))))
