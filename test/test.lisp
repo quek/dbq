@@ -51,10 +51,7 @@
    (comments :accessor comments-of)
    (categories :initarg :categories :accessor categories-of)))
 
-(def-hbtm :class entry :slot categories :other-class category :table "category_entries" :join-clause "
-inner join category_entries on category_entries.entry_id=entries.id
-inner join categories on categories.id = category_entries.category_id
-")
+(def-hbtm :class entry :slot categories :other-class category :table "category_entries")
 
 (defclass category (dao-mixin)
   ((name :initarg :name :accessor name-sf)))

@@ -2,7 +2,11 @@
 
 (defvar *hbtm* (make-hash-table :test #'eq))
 
-(defmacro def-hbtm (&key class slot join-clause other-class table)
+(defmacro def-hbtm (&key class slot other-class table
+                      (join-clause (format nil "inner join ~a on ~a.~a_id=~a.id inner join ~a on ~a.id = ~a.~a_id"
+                                           table table (to-column-name class) (to-table-name class)
+                                           (to-table-name other-class) (to-table-name other-class)
+                                           table (to-column-name other-class))))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *hbtm*)
