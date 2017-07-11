@@ -18,6 +18,10 @@
                 (join ',slot) (where ,(str (to-table-name class) ".id") (id-of instance)))
               :class ',other-class))))
 
+(defun hbtm-slot-p (record slot)
+  (aand  (gethash (class-name (class-of record)) *hbtm*)
+         (gethash slot it)))
+
 (defun hbtm-slots (class)
   (aif (gethash class *hbtm*)
        (loop for slot being the hash-keys of it

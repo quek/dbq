@@ -25,11 +25,9 @@
         if (eq (sb-pcl:slot-definition-allocation slot) :instance)
           collect slot))
 
-(defun hbtm-slot-p (record slot-name)
-  (hbtm-join-clause (class-name (class-of record)) slot-name))
-
 (defun normal-column-p (record slot-name)
-  (not (hbtm-slot-p record slot-name)))
+  (and (not (hbtm-slot-p record slot-name))
+       (not (has-many-slot-p record slot-name))))
 
 (defun insert-columns-values (record)
   (loop for slot in (column-slots record)
@@ -40,10 +38,7 @@
           collect (to-column-name slot-name) into columns
           and
             collect (to-sql-value (slot-value record slot-name)) into values
-        else if (and (hbtm-slot-p record slot-name)
-                     (slot-boundp record slot-name))
-               collect slot-name into hbtms
-        finally (return (values columns values hbtms))))
+        finally (return (values columns values))))
 
 
 (defun update-set (record)
@@ -56,8 +51,7 @@
                        (to-sql-value (slot-value record slot-name)))))
 
 (defun insert-sql (record)
-  (multiple-value-bind (columns values hbtms) (insert-columns-values record)
-    (declare (ignore hbtms))
+  (multiple-value-bind (columns values) (insert-columns-values record)
     (format nil "insert into ~a (~{~a~^, ~}) values (~{~a~^, ~})"
             (to-table-name record)
             columns

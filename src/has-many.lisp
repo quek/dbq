@@ -19,3 +19,22 @@
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
        (fetch (query ',other-class
                 (where ,foreign-key (id-of instance)))))))
+
+(defun has-many-slot-p (record slot)
+  (aand  (gethash (class-name (class-of record)) *has-many*)
+         (gethash slot it)))
+
+(defun has-many-slots (class)
+  (aif (gethash class *has-many*)
+       (loop for slot being the hash-keys of it
+             collect slot)))
+
+(defun has-many-config (class slot key)
+  (awhen (gethash class *has-many*)
+    (getf (gethash slot it) key)))
+
+(defun has-many-join-clause (class slot)
+  (has-many-config class slot :join-clause))
+
+(defun has-many-other-class (class slot)
+  (has-many-config class slot :other-class))
