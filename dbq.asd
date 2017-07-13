@@ -11,11 +11,13 @@
                (:file "hbtm")
                (:file "has-many")
                (:file "belongs-to")
-               (:file "query"))
+               (:file "query")
+               (:file "json"))
   :depends-on (#:alexandria
                #:cl-mysql
                #:closer-mop
                #:anaphora
                #:cl-ppcre
-               #:local-time))
+               #:local-time
+               #:cl-json))
 

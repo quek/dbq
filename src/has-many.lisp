@@ -42,6 +42,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
   (has-many-config class slot :other-class))
 
 (defun update-has-many (record)
+  ;; TODO 削除どうする？
   (loop with class = (class-name (class-of record))
         for slot in (has-many-slots class)
         if (slot-boundp record slot)

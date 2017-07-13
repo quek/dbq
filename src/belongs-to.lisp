@@ -15,6 +15,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
            '(:other-class ,other-class
              :foreign-key-slot ,foreign-key-slot
              :join-clause ,join-clause))
+     ;; TODO slot にする！！！
      (defmethod ,method ((record ,class))
        (aif (slot-value record ',foreign-key-slot)
             (find-by ',other-class :id it)))

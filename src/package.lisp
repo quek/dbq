@@ -43,4 +43,6 @@
    #:offset
    #:limit
    #:sql
+
+   #:json
    ))
