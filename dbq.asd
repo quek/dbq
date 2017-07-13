@@ -10,6 +10,7 @@
                (:file "dao")
                (:file "hbtm")
                (:file "has-many")
+               (:file "belongs-to")
                (:file "query"))
   :depends-on (#:alexandria
                #:cl-mysql

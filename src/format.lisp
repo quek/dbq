@@ -23,7 +23,7 @@
   (write-char #\` stream))
 
 (assert
- (string= "select from `dao_mixins` where `ab``cd`='ab'';c' and `a_b_c`=123"
+ (string= "select from `built_in_classes` where `ab``cd`='ab'';c' and `a_b_c`=123"
           (format nil
                   "select from ~/dbq::tbl/ where ~/dbq::col/=~/dbq::val/ and ~/dbq::col/=~/dbq::val/"
-                  'dao-mixin "ab`cd" "ab';c" 'a-b-c 123)))
+                  'list "ab`cd" "ab';c" 'a-b-c 123)))

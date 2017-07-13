@@ -15,8 +15,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
              :foreign-key-slot ,foreign-key-slot
              :join-clause ,join-clause))
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
-       (fetch (query ',other-class
-                (where ',foreign-key-slot (id-of instance)))))))
+       (setf (slot-value instance slot-name)
+             (fetch (query ',other-class
+                      (where ',foreign-key-slot (id-of instance))))))))
 
 (defun has-many-slot-p (record slot)
   (aand  (gethash (class-name (class-of record)) *has-many*)

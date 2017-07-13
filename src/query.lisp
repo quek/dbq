@@ -57,10 +57,8 @@
       (write-string "select ")
       (aif (query-builder-select query-builder)
            (write-string it)
-           (format t "distinct ~a.*" (to-table-name class-symbol)))
-      (format t
-              " from ~a"
-              (to-table-name class-symbol))
+           (format t "distinct ~/dbq::tbl/.*" class-symbol))
+      (format t " from ~/dbq::tbl/" class-symbol)
       (loop for join in (query-builder-join query-builder)
             for join-clause = (or (hbtm-join-clause class-symbol join)
                                   (has-many-join-clause class-symbol join)
@@ -75,15 +73,12 @@
                 while where
                 do (write-string and)
                    (setf and " and ")
-                   (let ((x (pop where)))
-                     (format t "~a=~a"
-                             (to-column-name x)
-                             (to-sql-value (pop where)))))))
+                   (format t "~/dbq::col/=~/dbq::val/" (pop where) (pop where)))))
       (awhen (query-builder-order query-builder)
         (write-string " order by ")
         (write-string it))
       (when (query-builder-limit query-builder)
-        (format t " limit ~d" (to-sql-value (query-builder-limit query-builder)))))))
+        (format t " limit ~/dbq::val/" (query-builder-limit query-builder))))))
 
 (defmacro query (query-builder &body body)
   `(let ((*query-builder* (to-query-builder ,query-builder)))

@@ -7,20 +7,21 @@
                        (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id ~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
-                        table
-                        table (str (to-column-name class) "_id") class
-                        other-class other-class
-                        table (str (to-column-name other-class) "_id"))))
+                               table
+                               table (str (to-column-name class) "_id") class
+                               other-class other-class
+                               table (str (to-column-name other-class) "_id"))))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *hbtm*)
                         (setf (gethash ',class *hbtm*) (make-hash-table :test #'eq))))
            '(:join-clause ,join-clause :other-class ,other-class :table ,table))
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
-       (fetch (query ',class
-                (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
-                (join ',slot) (where ,(format nil "~/dbq::tbl/.id"  class) (id-of instance)))
-              :class ',other-class))))
+       (setf (slot-value instance slot-name)
+             (fetch (query ',class
+                      (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
+                      (join ',slot) (where ,(format nil "~/dbq::tbl/.id"  class) (id-of instance)))
+                    :class ',other-class)))))
 
 (defun hbtm-slot-p (record slot)
   (aand  (gethash (class-name (class-of record)) *hbtm*)
