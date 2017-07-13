@@ -1,13 +1,27 @@
 (in-package :dbq)
 
-(defmethod json (instance &rest slots)
-  (json:encode-json-alist-to-string
-   (loop for slot in slots
-         if (atom slot)
-           collect (cons slot (slot-value instance slot))
-         else
-           collect ;; TODO いろいろやる
-           (cons slot (slot-value instance (car slot))))))
+(defun json (instance &rest slots)
+  (let ((json::*json-list-encoder-fn*
+          ;; SB-SYS:MEMORY-FAULT-ERROR が上がる対策
+          (lambda (s stream)
+            (handler-case (json::encode-json-list-guessing-encoder s stream)
+              (error ()
+                (json::encode-json-alist s stream))))))
+    (json:encode-json-alist-to-string (apply #'%json instance slots))))
+
+(defmethod %json (instance &rest slots)
+  (loop for slot in slots
+        if (atom slot)
+          collect (cons slot (slot-value instance slot))
+        else
+          collect (let* ((slots (cdr slot))
+                         (slot (car slot))
+                         (value (slot-value instance slot)))
+                    (cond ((has-many-slot-p instance slot)
+                           (cons slot (apply #'%json value slots)))))))
+
+(defmethod %json ((instance cons) &rest slots)
+  (mapcar (lambda (x) (apply #'%json x slots)) instance))
 
 (defmethod (setf json) ((json string) instance &rest slots)
   (let* ((json:*identifier-name-to-key* #'identity)
