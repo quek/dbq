@@ -37,8 +37,7 @@
 
 (defun where (&rest where)
   (setf *query-builder* (copy-query-builder *query-builder*))
-  (setf (query-builder-where *query-builder*)
-        (append (query-builder-where *query-builder*) where))
+  (push where (query-builder-where *query-builder*))
   *query-builder*)
 
 (defun order (order)
@@ -66,19 +65,23 @@
             if join-clause
               do (write-char #\space)
                  (write-string join-clause))
-      (let ((where (query-builder-where query-builder)))
-        (when where
-          (write-string " where ")
-          (loop with and = ""
-                while where
-                do (write-string and)
-                   (setf and " and ")
-                   (format t "~/dbq::col/=~/dbq::val/" (pop where) (pop where)))))
+      (sql-where query-builder)
       (awhen (query-builder-order query-builder)
         (write-string " order by ")
         (write-string it))
       (when (query-builder-limit query-builder)
         (format t " limit ~/dbq::val/" (query-builder-limit query-builder))))))
+
+(defun sql-where (query-builder)
+  (let ((wheres (query-builder-where query-builder)))
+    (when wheres
+      (format t " where ~{~a~^ and ~}"
+              (loop for where in wheres
+                    if (null (cdr where))
+                      append where
+                    else
+                      append (loop for (col val) on where by #'cddr
+                                   collect (format nil "~/dbq::col/=~/dbq::val/" col val)))))))
 
 (defmacro query (query-builder &body body)
   `(let ((*query-builder* (to-query-builder ,query-builder)))

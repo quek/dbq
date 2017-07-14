@@ -20,7 +20,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
        (setf (slot-value instance slot-name)
              (fetch (query ',class
                       (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
-                      (join ',slot) (where ,(format nil "~/dbq::tbl/.id"  class) (id-of instance)))
+                      (join ',slot)
+                      (where (format nil "~/dbq::tbl/.id=~/dbq::val/"  class (id-of instance))))
                     :class ',other-class)))))
 
 (defun hbtm-slot-p (record slot)
@@ -56,11 +57,11 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
              (loop for x in (slot-value record slot)
                    unless (persistedp x)
                      do (save x)
-                        (execute (format nil "~
+                   do (execute (format nil "~
 insert into ~/dbq::tbl/ (~/dbq::col/, ~/dbq::col/) values(~/dbq::val/, ~/dbq::val/)"
-                                         (hbtm-table class slot)
-                                         (to-foreign-key-column class)
-                                         (to-foreign-key-column (hbtm-other-class class slot))
-                                         (id-of record)
-                                         (id-of x))))))
+                                       (hbtm-table class slot)
+                                       (to-foreign-key-column class)
+                                       (to-foreign-key-column (hbtm-other-class class slot))
+                                       (id-of record)
+                                       (id-of x))))))
 

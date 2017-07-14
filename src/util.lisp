@@ -115,7 +115,11 @@
                                             :hour #\:
                                             :min #\:
                                             :sec
-                                            #\'))))
+                                            #\')))
+  (:method ((x null))
+    "0")
+  (:method ((x (eql t)))
+    "1"))
 
 (defgeneric to-lisp-value (value column-type)
   (:method (value column-type)
