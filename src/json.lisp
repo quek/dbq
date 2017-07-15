@@ -9,16 +9,22 @@
   (cons :alist
         (loop for slot in slots
          if (atom slot)
-           collect (cons slot (slot-value instance slot))
+           collect (cons slot (json-value instance slot))
          else
            collect (let* ((slots (cdr slot))
                           (slot (car slot))
-                          (value (slot-value instance slot)))
-                     (cond ((has-many-slot-p instance slot)
+                          (value (json-value instance slot)))
+                     (cond ((or (has-many-slot-p instance slot)
+                                (hbtm-slot-p instance slot))
                             (cons slot (apply #'%json value slots))))))))
 
-(defmethod %json ((instance cons) &rest slots)
+(defmethod %json ((instance list) &rest slots)
   (cons :list (mapcar (lambda (x) (apply #'%json x slots)) instance)))
+
+(defun json-value (instance slot)
+  (if (slot-exists-p instance slot)
+      (slot-value instance slot)
+      (funcall slot instance)))
 
 (defmethod (setf json) ((json string) instance &rest slots)
   (let* ((json:*identifier-name-to-key* #'identity)
