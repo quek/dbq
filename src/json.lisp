@@ -15,7 +15,8 @@
                           (slot (car slot))
                           (value (json-value instance slot)))
                      (cond ((or (has-many-slot-p instance slot)
-                                (hbtm-slot-p instance slot))
+                                (hbtm-slot-p instance slot)
+                                (belongs-to-slot-p instance slot))
                             (cons slot (apply #'%json value slots))))))))
 
 (defmethod %json ((instance list) &rest slots)
