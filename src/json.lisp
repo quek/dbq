@@ -42,12 +42,22 @@
                     (slot (car slot))
                     (json (cdr (assoc slot json :test #'string-equal))))
                (cond ((has-many-slot-p instance slot)
-                      (has-many-from-json instance slot slots json)))))
+                      (has-many-from-json instance slot slots json))
+                     ((hbtm-slot-p instance slot)
+                      (hbtm-from-json instance slot slots json)))))
   instance)
 
 (defun has-many-from-json (instance slot slots json)
   (let ((class (has-many-other-class (class-name (class-of instance))
-                                          slot)))
+                                     slot)))
+    (setf (slot-value instance slot)
+          (loop for j in json
+                collect (apply #'(setf json) j (make-instance class) slots)))))
+
+;; TODO 上の has-many-from-json と共通化だな
+(defun hbtm-from-json (instance slot slots json)
+  (let ((class (hbtm-other-class (class-name (class-of instance))
+                                 slot)))
     (setf (slot-value instance slot)
           (loop for j in json
                 collect (apply #'(setf json) j (make-instance class) slots)))))
