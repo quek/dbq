@@ -3,10 +3,11 @@
 (defvar *belongs-to* (make-hash-table :test #'eq))
 
 (defmacro def-belongs-to (&key class slot (other-class slot)
-                            (foreign-key-slot (sym other-class "-id"))
+                            (foreign-key-slot (sym other-class "-ID"))
                             (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
-                                                 other-class other-class class foreign-key-slot)))
+                                                 other-class other-class class foreign-key-slot))
+                            (writer `(setf ,(sym other-class "-OF"))))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *belongs-to*)
@@ -17,7 +18,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
        (setf (slot-value instance slot-name)
              (aif (slot-value instance ',foreign-key-slot)
-                  (find-by ',other-class :id it))))))
+                  (find-by ',other-class :id it))))
+     (defmethod ,writer :after (value (instance ,class))
+       (setf (slot-value instance ',foreign-key-slot) (dbq::id-of value)))))
 
 (defun belongs-to-config (class slot key)
   (awhen (gethash class *belongs-to*)
