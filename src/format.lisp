@@ -8,9 +8,12 @@
   (declare (ignore args))
   (write-char #\` stream)
   (loop for c across (to-column-name value)
-        if (char= #\` c)
-          do (write-char #\` stream)
-        do (write-char c stream))
+        do (cond ((char= #\. c)
+                  (write-string "`.`" stream))
+                 ((char= #\` c)
+                  (write-string "``" stream))
+                 (t
+                  (write-char c stream))))
   (write-char #\` stream))
 
 (defun tbl (stream value &rest args)

@@ -32,7 +32,8 @@
 
 (defun normal-column-p (record slot-name)
   (and (not (hbtm-slot-p record slot-name))
-       (not (has-many-slot-p record slot-name))))
+       (not (has-many-slot-p record slot-name))
+       (not (belongs-to-slot-p record slot-name))))
 
 (defun insert-columns-values (record)
   (loop for slot in (column-slots record)

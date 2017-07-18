@@ -35,8 +35,9 @@
 (defmethod (setf json) (json instance &rest slots)
   (loop for slot in slots
         if (atom slot)
-          do (setf (slot-value instance slot)
-                   (cdr (assoc slot json :test #'string-equal)))
+          do (awhen (assoc slot json :test #'string-equal)
+               (setf (slot-value instance slot)
+                     (cdr it)))
         else
           do (let* ((slots (cdr slot))
                     (slot (car slot))
