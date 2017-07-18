@@ -1,6 +1,7 @@
 (in-package :dbq)
 
 
+;; TODO これきれいじゃないから、なんか違う
 (defun json (thing &rest slots)
   (json:with-explicit-encoder
     (json:encode-json-to-string
