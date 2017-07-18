@@ -107,17 +107,14 @@
               do (write-char c out))
       (write-char #\' out)))
   (:method ((x local-time:timestamp))
-    (local-time:format-timestring nil x
-                                  :format '(#\'
-                                            :year #\/
-                                            :month #\/
-                                            :day #\space
-                                            :hour #\:
-                                            :min #\:
-                                            :sec
-                                            #\')))
+    (local-time:format-timestring
+     nil x :format '(#\'
+                     :year #\/ :month #\/ :day
+                     #\space
+                     :hour #\: :min #\: :sec
+                     #\')))
   (:method ((x null))
-    "0")
+    "null")
   (:method ((x (eql t)))
     "1"))
 

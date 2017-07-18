@@ -79,12 +79,15 @@
   (unless (slot-boundp record 'updated-at)
     (setf (slot-value record 'updated-at) (local-time:now))))
 
-(defmethod update (record)
-  (execute (format nil "~
+(defun update-sql (record)
+  (format nil "~
 update ~/dbq::tbl/ set ~{~/dbq::col/=~/dbq::val/~^, ~} where id=~/dbq::val/"
-                   record
-                   (update-set record)
-                   (slot-value record 'id))))
+          record
+          (update-set record)
+          (slot-value record 'id)))
+
+(defmethod update (record)
+  (execute (update-sql record)))
 
 (defmethod update :before ((record updated-at-mixin))
   (setf (slot-value record 'updated-at) (local-time:now)))

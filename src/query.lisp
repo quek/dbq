@@ -55,7 +55,7 @@
     (with-output-to-string (*standard-output*)
       (write-string "select ")
       (aif (query-builder-select query-builder)
-           (write-string it)
+           (format t "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list it))
            (format t "distinct ~/dbq::tbl/.*" class-symbol))
       (format t " from ~/dbq::tbl/" class-symbol)
       (loop for join in (query-builder-join query-builder)

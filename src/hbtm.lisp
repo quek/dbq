@@ -8,9 +8,9 @@
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id ~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
                                table
-                               table (str (to-column-name class) "_id") class
+                               table (sym class "-ID") class
                                other-class other-class
-                               table (str (to-column-name other-class) "_id"))))
+                               table (sym other-class "-ID"))))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *hbtm*)
@@ -52,7 +52,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
         if (slot-boundp record slot)
           do (execute (format nil "delete from ~/dbq::tbl/ where ~/dbq::col/=~/dbq::val/"
                               (hbtm-table class slot)
-                              (str (to-column-name class) "_id")
+                              (sym class "-ID")
                               (id-of record)))
              (loop for x in (slot-value record slot)
                    unless (persistedp x)
