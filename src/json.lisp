@@ -5,7 +5,7 @@
   (json:with-explicit-encoder
     (json:encode-json-to-string (apply #'%json instance slots))))
 
-(defmethod %json (instance &rest slots)
+(defmethod %json ((instance standard-object) &rest slots)
   (cons :alist
         (loop for slot in slots
          if (atom slot)
@@ -14,10 +14,7 @@
            collect (let* ((slots (cdr slot))
                           (slot (car slot))
                           (value (json-value instance slot)))
-                     (cond ((or (has-many-slot-p instance slot)
-                                (hbtm-slot-p instance slot)
-                                (belongs-to-slot-p instance slot))
-                            (cons slot (apply #'%json value slots))))))))
+                     (cons slot (apply #'%json value slots))))))
 
 (defmethod %json ((instance list) &rest slots)
   (cons :list (mapcar (lambda (x) (apply #'%json x slots)) instance)))
