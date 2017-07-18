@@ -1,9 +1,15 @@
 (in-package :dbq)
 
 
-(defun json (instance &rest slots)
+(defun json (thing &rest slots)
   (json:with-explicit-encoder
-    (json:encode-json-to-string (apply #'%json instance slots))))
+    (json:encode-json-to-string
+     (if (and (consp thing)
+              (keywordp (car thing)))
+         (cons :alist
+               (loop for (key . slots) in slots
+                     collect (cons key (apply #'%json (getf thing key) slots))))
+         (apply #'%json thing slots)))))
 
 (defmethod %json ((instance standard-object) &rest slots)
   (cons :alist
