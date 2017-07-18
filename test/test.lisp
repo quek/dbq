@@ -67,7 +67,11 @@
     (is (id= entry
              (fetch-one (query 'entry
                           (join 'comments)
-                          (where :comments.id (id-of comment1))))))))
+                          (where :comments.id (id-of comment1))))))
+    (setf (comments-of entry) (list comment1))
+    (save entry)
+    (is (equal (list (id-of comment1))
+               (mapcar #'id-of (fetch (query 'comment (where :entry-id (id-of entry)))))))))
 
 (deftest belongs-test ()
   (let* ((user (aprog1 (make-instance 'user :name "こねら")

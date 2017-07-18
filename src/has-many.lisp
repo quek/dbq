@@ -42,11 +42,19 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
   (has-many-config class slot :other-class))
 
 (defun update-has-many (record)
-  ;; TODO 削除どうする？
-  (loop with class = (class-name (class-of record))
+  "新しいリストにないものは削除してみよう。
+問題があるようなら _delete スロット追加とか検討する。"
+  (loop with id = (id-of record)
+        with class = (class-name (class-of record))
         for slot in (has-many-slots class)
+        for other-class = (has-many-other-class class slot)
+        for foreign-key-slot = (has-many-foreign-key-slot class slot)
         if (slot-boundp record slot)
-          do (loop for x in (slot-value record slot)
-                   do (setf (slot-value x (has-many-foreign-key-slot class slot))
-                            (id-of record))
-                      (save x))))
+          do (let ((old-list (fetch (query other-class (where foreign-key-slot id)))))
+              (loop for x in (slot-value record slot)
+                    do (setf (slot-value x (has-many-foreign-key-slot class slot))
+                             id)
+                       (save x)
+                       (setf old-list (delete x old-list :test #'id=)))
+               (loop for old in old-list
+                     do (delete-from old)))))
