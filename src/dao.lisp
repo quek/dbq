@@ -92,7 +92,7 @@ update ~/dbq::tbl/ set ~{~/dbq::col/=~/dbq::val/~^, ~} where id=~/dbq::val/"
 (defmethod update :before ((record updated-at-mixin))
   (setf (slot-value record 'updated-at) (local-time:now)))
 
-(defmethod delete-from (record)
+(defmethod delete (record)
   (execute (format nil "delete from ~/dbq::tbl/ where id=~/dbq::val/"
                    record
                    (slot-value record 'id))))

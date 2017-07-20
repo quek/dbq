@@ -18,11 +18,12 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
            '(:join-clause ,join-clause :other-class ,other-class :table ,table))
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
        (setf (slot-value instance slot-name)
-             (fetch (query ',class
-                      (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
-                      (join ',slot)
-                      (where (format nil "~/dbq::tbl/.id=~/dbq::val/"  class (id-of instance))))
-                    :class ',other-class)))))
+             (if (persistedp instance)
+                 (fetch (query ',class
+                          (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
+                          (join ',slot)
+                          (where (format nil "~/dbq::tbl/.id=~/dbq::val/"  class (id-of instance))))
+                        :class ',other-class))))))
 
 (defun hbtm-slot-p (record slot)
   (aand  (gethash (class-name (class-of record)) *hbtm*)

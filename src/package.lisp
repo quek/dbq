@@ -2,6 +2,7 @@
 
 (defpackage :dbq
   (:use :cl :anaphora)
+  (:shadow #:count #:delete)
   (:export
    ;; connection
    #:establish-connection
@@ -23,7 +24,6 @@
    #:updated-at
    #:has-many
    #:save
-   #:delete-from
    #:find-by
 
    #:def-hbtm
@@ -33,6 +33,7 @@
    ;;
    #:fetch-one
    #:fetch
+   #:count
    #:query
    #:select
    #:from
@@ -42,6 +43,8 @@
    #:group
    #:offset
    #:limit
+   #:page
+   #:per-page
    #:sql
 
    #:json

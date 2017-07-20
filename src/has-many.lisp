@@ -16,8 +16,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
              :join-clause ,join-clause))
      (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
        (setf (slot-value instance slot-name)
-             (fetch (query ',other-class
-                      (where ',foreign-key-slot (id-of instance))))))))
+             (if (persistedp instance)
+                 (fetch (query ',other-class
+                          (where ',foreign-key-slot (id-of instance)))))))))
 
 (defun has-many-slot-p (record slot)
   (aand  (gethash (class-name (class-of record)) *has-many*)
@@ -55,6 +56,6 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
                     do (setf (slot-value x (has-many-foreign-key-slot class slot))
                              id)
                        (save x)
-                       (setf old-list (delete x old-list :test #'id=)))
+                       (setf old-list (cl:delete x old-list :test #'id=)))
                (loop for old in old-list
-                     do (delete-from old)))))
+                     do (delete old)))))

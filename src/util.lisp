@@ -101,10 +101,12 @@
     (with-output-to-string (out)
       (write-char #\' out)
       (loop for c across x
-            if (char= #\' c)
-              do (write-string "''" out)
-            else
-              do (write-char c out))
+            do (cond ((char= #\' c)
+                      (write-string "''" out))
+                     ((char= #\\ c)
+                      (write-string "\\\\" out))
+                     (t
+                      (write-char c out))))
       (write-char #\' out)))
   (:method ((x local-time:timestamp))
     (local-time:format-timestring

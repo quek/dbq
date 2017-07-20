@@ -11,7 +11,9 @@
   having
   group
   limit
-  offset)
+  offset
+  page
+  (per-page 10))
 
 (defgeneric to-query-builder (x)
   (:method ((x query-builder))
@@ -50,32 +52,76 @@
   (setf (query-builder-limit *query-builder*) limit)
   *query-builder*)
 
+(defun offset (offset)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf (query-builder-offset *query-builder*) offset)
+  *query-builder*)
+
+(defun page (page)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf (query-builder-page *query-builder*) page)
+  *query-builder*)
+
+(defun per-page (per-page)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf (query-builder-per-page *query-builder*) per-page)
+  *query-builder*)
+
 (defun sql (query-builder)
   (let ((class-symbol (query-builder-from query-builder)))
-    (with-output-to-string (*standard-output*)
-      (write-string "select ")
+    (with-output-to-string (out)
+      (write-string "select " out)
       (aif (query-builder-select query-builder)
-           (format t "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list it))
-           (format t "distinct ~/dbq::tbl/.*" class-symbol))
-      (format t " from ~/dbq::tbl/" class-symbol)
-      (loop for join in (query-builder-join query-builder)
-            for join-clause = (or (hbtm-join-clause class-symbol join)
-                                  (has-many-join-clause class-symbol join)
-                                  (belongs-to-join-clause class-symbol join))
-            if join-clause
-              do (write-char #\space)
-                 (write-string join-clause))
-      (sql-where query-builder)
-      (awhen (query-builder-order query-builder)
-        (write-string " order by ")
-        (write-string it))
-      (when (query-builder-limit query-builder)
-        (format t " limit ~/dbq::val/" (query-builder-limit query-builder))))))
+           (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list it))
+           (format out "distinct ~/dbq::tbl/.*" class-symbol))
 
-(defun sql-where (query-builder)
+      (build-from query-builder out)
+
+      (build-join query-builder out)
+
+      (build-where query-builder out)
+
+      (awhen (query-builder-order query-builder)
+        (write-string " order by " out)
+        (write-string it out))
+
+      (multiple-value-bind (limit offset)
+          (let ((page (query-builder-page query-builder)))
+            (if page
+                (let ((per-page (query-builder-per-page query-builder)))
+                  (values per-page
+                         (* per-page (1- page))))
+                (values (query-builder-limit query-builder)
+                       (query-builder-offset query-builder))))
+        (when limit
+          (format out " limit ~/dbq::val/" limit))
+        (when offset
+          (format out " offset ~/dbq::val/" offset))))))
+
+(defun count-sql (query-builder)
+  (with-output-to-string (out)
+    (write-string "select count(*)" out)
+    (build-from query-builder out)
+    (build-join query-builder out)
+    (build-where query-builder out)))
+
+(defun build-from (query-builder out)
+  (format out " from ~/dbq::tbl/" (query-builder-from query-builder)))
+
+(defun build-join (query-builder out)
+  (let ((class (query-builder-from query-builder)))
+   (loop for join in (query-builder-join query-builder)
+         for join-clause = (or (hbtm-join-clause class join)
+                               (has-many-join-clause class join)
+                               (belongs-to-join-clause class join))
+         if join-clause
+           do (write-char #\space out)
+              (write-string join-clause out))))
+
+(defun build-where (query-builder out)
   (let ((wheres (query-builder-where query-builder)))
     (when wheres
-      (format t " where ~{~a~^ and ~}"
+      (format out " where ~{~a~^ and ~}"
               (loop for where in wheres
                     if (null (cdr where))
                       append where
@@ -85,6 +131,7 @@
 
 (defmacro query (query-builder &body body)
   `(let ((*query-builder* (to-query-builder ,query-builder)))
+     (declare (special *query-builder*))
      ,@body
      *query-builder*))
 
@@ -114,4 +161,10 @@
     (store class rows columns)))
 
 (defun find-by (class &rest conditions)
-  (fetch-one (query class (apply #'where conditions)) :class class))
+  (let ((query (query class (apply #'where conditions))))
+   (fetch-one query :class (query-builder-from query))))
+
+(defun count (query)
+  (destructuring-bind ((((n)) columns)) (execute (count-sql query))
+    (declare (ignore columns))
+    n))
