@@ -115,6 +115,8 @@
                      #\space
                      :hour #\: :min #\: :sec
                      #\')))
+  (:method ((x list))
+    (format nil "(~{~/dbq::val/~^, ~})" x))
   (:method ((x null))
     "null")
   (:method ((x (eql t)))

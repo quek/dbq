@@ -127,7 +127,9 @@
                       append where
                     else
                       append (loop for (col val) on where by #'cddr
-                                   collect (format nil "~/dbq::col/=~/dbq::val/" col val)))))))
+                                   collect (if (atom val)
+                                               (format nil "~/dbq::col/ = ~/dbq::val/" col val)
+                                               (format nil "~/dbq::col/ in ~/dbq::val/" col val))))))))
 
 (defmacro query (query-builder &body body)
   `(let ((*query-builder* (to-query-builder ,query-builder)))

@@ -1,3 +1,10 @@
+拡張シーケンス使う？
+(query (relation (voices-of temple))
+  (page 1)
+  (per-page 10))
+
+
+
 (defclass table ()
   ((attributes)
    (associations)
