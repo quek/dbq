@@ -2,7 +2,8 @@
 
 (defvar *hbtm* (make-hash-table :test #'eq))
 
-(defmacro def-hbtm (&key class slot other-class table
+(defmacro def-hbtm (&key class slot table
+                      (other-class (sym (singularize slot)))
                       (join-clause
                        (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id ~

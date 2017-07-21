@@ -3,7 +3,7 @@
 (defvar *has-many* (make-hash-table :test #'eq))
 
 (defmacro def-has-many (&key class slot
-                          (other-class (sym (singularize 'voices)))
+                          (other-class (sym (singularize slot)))
                           (foreign-key-slot (sym class "-id"))
                           (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
