@@ -79,9 +79,9 @@
          (entry (make-instance 'entry :title "題名" :content "本文"
                                       :comments (list comment1 comment2))))
     (save entry)
-    (let* ((entry (find-by 'entry :id (id-of entry)))
-           (comments (fetch (query (comments-of entry) (limit 1)))))
-      (is (= 1 (length comments))))))
+    (let* ((entry (find-by 'entry :id (id-of entry))))
+      (is (= 1 (length (fetch (query (comments-of entry) (limit 1))))))
+      (is (= 2 (length (fetch (query (comments-of entry)))))))))
 
 (deftest belongs-test ()
   (let* ((user (aprog1 (make-instance 'user :name "こねら")
