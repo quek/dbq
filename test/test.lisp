@@ -55,7 +55,7 @@
                           (join 'categories)
                           (where :categories.id (id-of category1))))))))
 
-(deftest has-many-insert-test ()
+(deftest has-many-test ()
   (let* ((comment1 (make-instance 'comment :content "こんにちは"))
          (comment2 (make-instance 'comment :content "こんばんは"))
          (entry (make-instance 'entry :title "題名" :content "本文"
@@ -72,6 +72,16 @@
     (save entry)
     (is (equal (list (id-of comment1))
                (mapcar #'id-of (fetch (query 'comment (where :entry-id (id-of entry)))))))))
+
+(deftest has-many-query-test ()
+  (let* ((comment1 (make-instance 'comment :content "こんにちは"))
+         (comment2 (make-instance 'comment :content "こんばんは"))
+         (entry (make-instance 'entry :title "題名" :content "本文"
+                                      :comments (list comment1 comment2))))
+    (save entry)
+    (let* ((entry (find-by 'entry :id (id-of entry)))
+           (comments (fetch (query (comments-of entry) (limit 1)))))
+      (is (= 1 (length comments))))))
 
 (deftest belongs-test ()
   (let* ((user (aprog1 (make-instance 'user :name "こねら")

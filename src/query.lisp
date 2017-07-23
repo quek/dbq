@@ -132,7 +132,8 @@
                                                (format nil "~/dbq::col/ in ~/dbq::val/" col val))))))))
 
 (defmacro query (query-builder &body body)
-  `(let ((*query-builder* (to-query-builder ,query-builder)))
+  `(let* ((*query-builder* t)
+          (*query-builder* (to-query-builder ,query-builder)))
      (declare (special *query-builder*))
      ,@body
      *query-builder*))
