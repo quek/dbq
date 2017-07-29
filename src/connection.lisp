@@ -29,7 +29,7 @@
 (setf (gethash :timestamp cl-mysql:*type-map*) 'datetime-string-to-local-time)
 
 (defun execute (sql)
-  (print sql)
+  (log4cl:log-debug sql)
   (cl-mysql:query sql))
 
 (define-condition rollback-error (error) ())

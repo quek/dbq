@@ -7,11 +7,11 @@
                (:file "util")
                (:file "format")
                (:file "connection")
+               (:file "query")
                (:file "dao")
                (:file "hbtm")
                (:file "has-many")
                (:file "belongs-to")
-               (:file "query")
                (:file "json"))
   :depends-on (#:alexandria
                #:cl-mysql
@@ -19,5 +19,6 @@
                #:anaphora
                #:cl-ppcre
                #:local-time
-               #:cl-json))
+               #:cl-json
+               #:log4cl))
 
