@@ -1,36 +1,41 @@
 (in-package :dbq)
 
 
-(defun establish-connection (&key (host "localhost") user password database port)
-  (cl-mysql:connect :host host :user user :password password :database database :port port))
+(defun establish-connection (&key (host "localhost") user password database (port 5432))
+  (disconnect)
+  (postmodern:connect-toplevel database user password host :port port))
 
 (defun disconnect ()
-  (cl-mysql:disconnect))
+  (postmodern:disconnect-toplevel))
 
-(defmacro with-connection  ((&key (host "localhost") user password database port) &body body)
-  ;; TODO pool はスレッドごとじゃなくていいよね
-  `(let ((cl-mysql-system:*last-database* nil))
-     (establish-connection :host ,host :user ,user :password ,password :database ,database :port ,port)
-     (unwind-protect
-          (progn ,@body)
-       (disconnect))))
+(defmacro with-connection  ((&key (host "localhost") user password database (port 5432)) &body body)
+  `(sb-sys:without-interrupts
+     (let* ((postmodern:*database* nil)
+            (postmodern:*database*
+              (sb-sys:allow-with-interrupts
+                (postmodern:connect ,database ,user ,password ,host :port ,port))))
+       (unwind-protect
+            (sb-sys:with-local-interrupts
+              ,@body)
+         (when postmodern:*database*
+           (postmodern:disconnect postmodern:*database*))))))
 
 ;; 9時間ずれた universal-time でかえってくるので
-(let ((offset (- (* 60 60
-                    (car (last (multiple-value-list
-                                (decode-universal-time (get-universal-time)))))))))
-  (defun datetime-string-to-local-time (string &optional len)
-    (declare (ignore len))
-    (if (equal "0000-00-00 00:00:00" string)
-        nil
-        (local-time:parse-timestring string :date-time-separator #\space :offset offset))))
+(let ((offset (* 60 60
+                 (car (last (multiple-value-list
+                             (decode-universal-time (get-universal-time))))))))
+  (defun timestamp-reader (useconds-since-2000)
+    (multiple-value-bind (quotient remainder) (floor useconds-since-2000 1000000)
+      (let ((timestamp (local-time:universal-to-timestamp (+ cl-postgres::+start-of-2000+ quotient
+                                                             offset))))
+        (local-time:timestamp+ timestamp (* remainder 1000) :nsec)))))
 
-(setf (gethash :datetime cl-mysql:*type-map*) 'datetime-string-to-local-time)
-(setf (gethash :timestamp cl-mysql:*type-map*) 'datetime-string-to-local-time)
+(cl-postgres:set-sql-datetime-readers :timestamp #'timestamp-reader)
+
 
 (defun execute (sql)
   (log4cl:log-debug sql)
-  (cl-mysql:query sql))
+  (postmodern:query sql :str-alists))
 
 (define-condition rollback-error (error) ())
 

@@ -1,6 +1,11 @@
 (in-package :dbq)
 
 
+(setq json::+json-lisp-symbol-tokens+
+      '(("true" . t)
+        ("null" . :null)
+        ("false" . nil)))
+
 ;; TODO これきれいじゃないから、なんか違う
 (defun json (thing &rest slots)
   (json:with-explicit-encoder

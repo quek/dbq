@@ -138,36 +138,31 @@
      ,@body
      *query-builder*))
 
-(defun set-value (object value column-name column-type)
-  (let ((slot (find (to-column-name column-name) (sb-mop:class-slots (class-of object))
+(defun set-value (object value column)
+  (let ((slot (find (to-column-name column) (sb-mop:class-slots (class-of object))
                     :test #'string-equal
                     :key (lambda (x) (to-column-name (sb-mop:slot-definition-name x))))))
     (if slot
         (setf (slot-value object (sb-mop:slot-definition-name slot))
-              (to-lisp-value value column-type))
-        (format t "no slot for ~a ~a" column-name value))))
+              value)
+        (format t "no slot for ~a ~a" column value))))
 
-(defun store (class rows columns)
-  (loop for row in rows
+(defun store (class rows)
+  (loop for alist in rows
         collect (let ((object (make-instance class)))
-                  (loop for value in row
-                        for (column-name column-type) in columns
-                        do (set-value object value column-name column-type))
+                  (loop for (column . value) in alist
+                        do (set-value object value column))
                   object)))
 
 (defun fetch-one (query &key (class (query-builder-from query)))
-  (destructuring-bind ((rows columns)) (execute (sql (query query (limit 1))))
-    (car (store class rows columns))))
+  (car (store class (execute (sql (query query (limit 1)))))))
 
 (defun fetch (query &key (class (query-builder-from query)))
-  (destructuring-bind ((rows columns)) (execute (sql query))
-    (store class rows columns)))
+  (store class (execute (sql query))))
 
 (defun find-by (class &rest conditions)
   (let ((query (query class (apply #'where conditions))))
    (fetch-one query :class (query-builder-from query))))
 
 (defun count (query)
-  (destructuring-bind ((((n)) columns)) (execute (count-sql query))
-    (declare (ignore columns))
-    n))
+  (cdaar (execute (count-sql query))))

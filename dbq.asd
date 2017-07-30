@@ -14,7 +14,7 @@
                (:file "belongs-to")
                (:file "json"))
   :depends-on (#:alexandria
-               #:cl-mysql
+               #:postmodern
                #:closer-mop
                #:anaphora
                #:cl-ppcre

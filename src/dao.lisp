@@ -65,9 +65,9 @@
             values)))
 
 (defmethod create (record)
-  (destructuring-bind (_a (((id)) _b))
-      (execute (concatenate 'string (insert-sql record) "; select last_insert_id();"))
-    (declare (ignore _a _b))
+  (destructuring-bind (((_ . id)))
+      (execute (concatenate 'string (insert-sql record) " returning id"))
+    (declare (ignore _))
     (setf (slot-value record 'id) id))
   record)
 

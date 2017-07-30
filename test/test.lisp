@@ -99,6 +99,6 @@
   (execute "delete from entries")
   (loop repeat 3 do (save (make-instance 'entry :title "題名" :content "本文")))
   (loop repeat 3 do (save (make-instance 'entry :title "ねこ" :content "ねねこ")))
-  (is (= 3 (dbq:count (query 'entry (where :content "ねねこ")) ))))
+  (is (= 3 (dbq:count (query 'entry (where :content "ねねこ"))))))
 
 (run-package-tests :interactive t)

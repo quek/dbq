@@ -103,8 +103,6 @@
       (loop for c across x
             do (cond ((char= #\' c)
                       (write-string "''" out))
-                     ((char= #\\ c)
-                      (write-string "\\\\" out))
                      (t
                       (write-char c out))))
       (write-char #\' out)))
@@ -117,14 +115,12 @@
                      #\')))
   (:method ((x list))
     (format nil "(~{~/dbq::val/~^, ~})" x))
-  (:method ((x null))
-    "null")
   (:method ((x (eql t)))
-    "1"))
-
-(defgeneric to-lisp-value (value column-type)
-  (:method (value column-type)
-    value))
+    "'t'")
+  (:method ((x null))
+    "'f'")
+  (:method ((x (eql :null)))
+    "null"))
 
 (defun to-foreign-key-column (x)
   (str (to-column-name x) "_id"))

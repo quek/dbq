@@ -1,52 +1,47 @@
 (in-package :dbq.test)
 
+;; sudo -u postgres psql
+;; create table dbq_test
+;; alter user ancient with encrypted password 'neko';
 (let ((db-name "dbq_test"))
+  #+nil
   (asdf:run-shell-command
    "echo 'CREATE DATABASE IF NOT EXISTS `~a` DEFAULT CHARACTER SET utf8mb4' | mysql -uroot"
    db-name)
-  (establish-connection :user "root"
+  (establish-connection :user "ancient"
+                        :password "neko"
                         :database db-name))
 
 (progn
-  (execute "drop table if exists `entries`")
+  (execute "drop table if exists entries")
   (execute "create table entries (
-  `id` int(11) not null auto_increment,
-  `title` varchar(100) not null,
-  `content` text not null,
-  `user_id` int,
-  `created_at` datetime not null,
-  `updated_at` datetime not null,
-  primary key (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-  (execute "drop table if exists `comments`")
+  id serial primary key,
+  title varchar(100) not null,
+  content text not null,
+  user_id int,
+  created_at timestamp not null,
+  updated_at timestamp not null)")
+  (execute "drop table if exists comments")
   (execute "create table comments (
-  `id` int(11) not null auto_increment,
-  `entry_id` int(11) not null,
-  `content` text not null,
-  `created_at` datetime not null,
-  `updated_at` datetime not null,
-  primary key (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-  (execute "drop table if exists `categories`")
+  id serial primary key,
+  entry_id integer not null,
+  content text not null,
+  created_at timestamp not null,
+  updated_at timestamp not null)")
+  (execute "drop table if exists categories")
   (execute "create table categories (
-  `id` int(11) not null auto_increment,
-  `name` varchar(255) not null,
-  `created_at` datetime not null,
-  `updated_at` datetime not null,
-  primary key (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-  (execute "drop table if exists `category_entries`")
-  (execute "create table `category_entries` (
-  `category_id` int not null,
-  `entry_id` int not null,
-  primary key (`category_id`, `entry_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-  (execute "drop table if exists `users`")
-  (execute "create table `users` (
-  `id` int(11) not null auto_increment,
-  `name` varchar(100) not null,
-  `created_at` datetime not null,
-  `updated_at` datetime not null,
-  primary key (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+  id serial primary key,
+  name varchar(255) not null,
+  created_at timestamp not null,
+  updated_at timestamp not null)")
+  (execute "drop table if exists category_entries")
+  (execute "create table category_entries (
+  category_id integer not null,
+  entry_id integer not null)")
+  (execute "drop table if exists users")
+  (execute "create table users (
+  id serial primary key,
+  name varchar(100) not null,
+  created_at timestamp not null,
+  updated_at timestamp not null)")
   )
