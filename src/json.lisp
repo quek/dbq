@@ -31,6 +31,10 @@
 (defmethod %json ((instance list) &rest slots)
   (cons :list (mapcar (lambda (x) (apply #'%json x slots)) instance)))
 
+(defmethod %json ((instance (eql :null)) &rest slots)
+  (declare (ignore slots))
+  #())
+
 (defun json-value (instance slot)
   (if (slot-exists-p instance slot)
       (slot-value instance slot)

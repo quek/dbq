@@ -63,3 +63,19 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
                        (setf old-list (cl:delete x old-list :test #'id=)))
                (loop for old in old-list
                      do (delete old)))))
+
+(defun preload-has-many (records query)
+  (loop with class = (query-builder-from query)
+        with ids = (mapcar #'id-of records)
+        for slot in (intersection (query-builder-preload query)
+                                  (has-many-slots class))
+        for other-class = (has-many-other-class class slot)
+        for foreign-key-slot = (has-many-foreign-key-slot class slot)
+        for children = (fetch (query other-class (where foreign-key-slot ids)))
+        do (loop for record in records
+                 do (setf (slot-value record slot) nil))
+           (loop for child in (nreverse children)
+                 for record = (find (slot-value child foreign-key-slot)
+                                    records :key #'id-of)
+                 do (push child (slot-value record slot)))))
+

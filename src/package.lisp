@@ -45,6 +45,7 @@
    #:limit
    #:page
    #:per-page
+   #:preload
    #:sql
 
    #:json

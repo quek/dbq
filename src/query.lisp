@@ -13,7 +13,8 @@
   limit
   offset
   page
-  (per-page 10))
+  (per-page 10)
+  preload)
 
 (defgeneric to-query-builder (x)
   (:method ((x query-builder))
@@ -65,6 +66,12 @@
 (defun per-page (per-page)
   (setf *query-builder* (copy-query-builder *query-builder*))
   (setf (query-builder-per-page *query-builder*) per-page)
+  *query-builder*)
+
+(defun preload (&rest preload)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf  (query-builder-preload *query-builder*)
+         (append (query-builder-preload *query-builder*) preload))
   *query-builder*)
 
 (defun sql (query-builder)
@@ -158,7 +165,12 @@
   (car (store class (execute (sql (query query (limit 1)))))))
 
 (defun fetch (query &key (class (query-builder-from query)))
-  (store class (execute (sql query))))
+  (let ((results (store class (execute (sql query)))))
+    (when (and results (query-builder-preload query))
+      (preload-has-many results query)
+      (preload-hbtm results query)
+      (preload-belongs-to results query))
+    results))
 
 (defun find-by (class &rest conditions)
   (let ((query (query class (apply #'where conditions))))
