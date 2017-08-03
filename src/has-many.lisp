@@ -7,7 +7,8 @@
                           (foreign-key-slot (sym class "-id"))
                           (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
-                                               other-class other-class foreign-key-slot class)))
+                                               other-class other-class foreign-key-slot class))
+                          (order (format nil "~/dbq::tbl/.id" other-class)))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *has-many*)
@@ -22,7 +23,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
            (setf (slot-value instance slot-name)
                  (if (persistedp instance)
                      (fetch (query ',other-class
-                              (where ',foreign-key-slot (id-of instance))))))))))
+                              (where ',foreign-key-slot (id-of instance))
+                              (order ,order)))))))))
 
 (defun has-many-slot-p (record slot)
   (aand  (gethash (class-name (class-of record)) *has-many*)
