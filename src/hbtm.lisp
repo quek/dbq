@@ -69,7 +69,7 @@ insert into ~/dbq::tbl/ (~/dbq::col/, ~/dbq::col/) values(~/dbq::val/, ~/dbq::va
 
 (defun preload-hbtm (records query)
   (loop with class = (query-builder-from query)
-        with ids = (mapcar #'id-of records)
+        with ids = (delete-duplicates (mapcar #'id-of records))
         for slot in (intersection (query-builder-preload query)
                                   (hbtm-slots class))
         for other-class = (hbtm-other-class class slot)

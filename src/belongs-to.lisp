@@ -50,7 +50,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
                                   (belongs-to-slots class))
         for other-class = (belongs-to-other-class class slot)
         for foreign-key-slot = (belongs-to-foreign-key-slot class slot)
-        for ids = (mapcar (lambda (b) (slot-value b foreign-key-slot)) records)
+        for ids = (delete-duplicates (mapcar (lambda (b) (slot-value b foreign-key-slot)) records))
         for parents = (fetch (query other-class (where :id ids)))
         do (loop for record in records
                  for parent = (find (slot-value record foreign-key-slot) parents :key #'id-of)

@@ -68,7 +68,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
 
 (defun preload-has-many (records query)
   (loop with class = (query-builder-from query)
-        with ids = (mapcar #'id-of records)
+        with ids = (delete-duplicates (mapcar #'id-of records))
         for slot in (intersection (query-builder-preload query)
                                   (has-many-slots class))
         for other-class = (has-many-other-class class slot)
