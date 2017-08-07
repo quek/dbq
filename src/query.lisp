@@ -43,6 +43,11 @@
   (push where (query-builder-where *query-builder*))
   *query-builder*)
 
+(defun group (group)
+  (setf *query-builder* (copy-query-builder *query-builder*))
+  (setf (query-builder-group *query-builder*) group)
+  *query-builder*)
+
 (defun order (order)
   (setf *query-builder* (copy-query-builder *query-builder*))
   (setf (query-builder-order *query-builder*) order)
@@ -88,6 +93,8 @@
 
       (build-where query-builder out)
 
+      (build-group query-builder out)
+
       (awhen (query-builder-order query-builder)
         (write-string " order by " out)
         (write-string it out))
@@ -110,7 +117,8 @@
     (write-string "select count(*)" out)
     (build-from query-builder out)
     (build-join query-builder out)
-    (build-where query-builder out)))
+    (build-where query-builder out)
+    (build-group query-builder out)))
 
 (defun build-from (query-builder out)
   (format out " from ~/dbq::tbl/" (query-builder-from query-builder)))
@@ -137,6 +145,11 @@
                                    collect (if (atom val)
                                                (format nil "~/dbq::col/ = ~/dbq::val/" col val)
                                                (format nil "~/dbq::col/ in ~/dbq::val/" col val))))))))
+
+(defun build-group (query-builder out)
+  (let ((group (query-builder-group query-builder)))
+    (when group
+      (format out " group by ~{~/dbq::col/~^ ,~}" (alexandria:ensure-list group)))))
 
 (defmacro query (query-builder &body body)
   `(let* ((*query-builder* t)
