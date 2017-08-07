@@ -80,37 +80,28 @@
   *query-builder*)
 
 (defun sql (query-builder)
-  (let ((class-symbol (query-builder-from query-builder)))
-    (with-output-to-string (out)
-      (write-string "select " out)
-      (aif (query-builder-select query-builder)
-           (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list it))
-           (format out "distinct ~/dbq::tbl/.*" class-symbol))
+  (with-output-to-string (out)
+    (build-select query-builder out)
+    (build-from query-builder out)
+    (build-join query-builder out)
+    (build-where query-builder out)
+    (build-group query-builder out)
+    (awhen (query-builder-order query-builder)
+      (write-string " order by " out)
+      (write-string it out))
 
-      (build-from query-builder out)
-
-      (build-join query-builder out)
-
-      (build-where query-builder out)
-
-      (build-group query-builder out)
-
-      (awhen (query-builder-order query-builder)
-        (write-string " order by " out)
-        (write-string it out))
-
-      (multiple-value-bind (limit offset)
-          (let ((page (query-builder-page query-builder)))
-            (if page
-                (let ((per-page (query-builder-per-page query-builder)))
-                  (values per-page
-                         (* per-page (1- page))))
-                (values (query-builder-limit query-builder)
-                       (query-builder-offset query-builder))))
-        (when limit
-          (format out " limit ~/dbq::val/" limit))
-        (when offset
-          (format out " offset ~/dbq::val/" offset))))))
+    (multiple-value-bind (limit offset)
+        (let ((page (query-builder-page query-builder)))
+          (if page
+              (let ((per-page (query-builder-per-page query-builder)))
+                (values per-page
+                        (* per-page (1- page))))
+              (values (query-builder-limit query-builder)
+                      (query-builder-offset query-builder))))
+      (when limit
+        (format out " limit ~/dbq::val/" limit))
+      (when offset
+        (format out " offset ~/dbq::val/" offset)))))
 
 (defun count-sql (query-builder)
   (with-output-to-string (out)
@@ -119,6 +110,19 @@
     (build-join query-builder out)
     (build-where query-builder out)
     (build-group query-builder out)))
+
+(defun build-select (query-builder out)
+  (write-string "select " out)
+  (let ((select (query-builder-select query-builder))
+        (class (query-builder-from query-builder)))
+    (cond (select
+           (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list select)))
+          ((query-builder-group query-builder)
+           (format out "~/dbq::tbl/.*" class))
+          ((query-builder-join query-builder)
+           (format out "distinct ~/dbq::tbl/.*" class))
+          (t
+           (format out "~/dbq::tbl/.*" class)))))
 
 (defun build-from (query-builder out)
   (format out " from ~/dbq::tbl/" (query-builder-from query-builder)))
