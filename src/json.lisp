@@ -40,6 +40,9 @@
       (slot-value instance slot)
       (funcall slot instance)))
 
+(defmethod json:encode-json ((location location) &optional (stream json:*json-output*))
+  (format stream "{\"lat\":~f,\"lng\":~f}" (location-lat location) (location-lng location)))
+
 (defmethod (setf json) ((json string) instance &rest slots)
   (let* ((json:*identifier-name-to-key* #'identity)
          (json (json:decode-json-from-source json)))
