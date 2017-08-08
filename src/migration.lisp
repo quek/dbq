@@ -10,23 +10,25 @@
                            collect key)
                      #'string< :key #'symbol-name)))
     (loop for key in keys
-          do (migrate-up key (car (gethash key migrations))))))
+          do (migrate-call-up key (car (gethash key migrations))))))
 
 (defun migrate-down (package version)
-  (let ((migrations (gethash (find-package package) *migrations*)))
+  (let* ((migrations (gethash (find-package package) *migrations*))
+         (function (cdr (or (gethash version migrations)
+                            (error "No such migration ~a::~a!" package version)))))
     (with-transaction
       (when (execute (format nil "select * from migrations where version = ~/dbq::val/"
                              (symbol-name version)))
         (execute (format nil "delete from migrations where version = ~/dbq::val/"
                          (symbol-name version)))
-        (funcall (cdr (gethash version migrations)))))))
+        (funcall function)))))
 
 (defun ensure-migration-table ()
   (execute "create table if not exists migrations (
 version varchar(255) primary key
 )"))
 
-(defun migrate-up (version up)
+(defun migrate-call-up (version up)
   (with-transaction
     (unless (execute (format nil "select * from migrations where version = ~/dbq::val/"
                              (symbol-name version)))

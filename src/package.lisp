@@ -50,7 +50,6 @@
 
    #:def-migration
    #:migrate
-   #:migrate-up
    #:migrate-down
 
    #:json
