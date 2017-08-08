@@ -2,7 +2,7 @@
   :serial t
   :pathname "test/"
   :components ((:file "package")
-               (:file "sql")
+               (:file "migrations")
                (:file "class")
                (:file "relation")
                (:file "test"))
