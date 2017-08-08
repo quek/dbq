@@ -64,6 +64,25 @@
   (format nil "~{~a~}" args))
 
 
+(defstruct location lat lng)
+
+(cl-postgres:set-sql-reader
+ 34147
+ (lambda (stream size)
+   (declare (ignore size))
+   (fast-io:with-fast-input (buffer nil stream)
+     (let* ((le-p (= 1 (fast-io:readu8 buffer)))
+            (r32 (if le-p #'fast-io:read32-le #'fast-io:read32-be))
+            (r64 (if le-p #'fast-io:read64-le #'fast-io:read64-be))
+            (type (funcall r32 buffer))
+            (srid (funcall r32 buffer))
+            (lng (ieee-floats:decode-float64 (funcall r64 buffer)))
+            (lat (ieee-floats:decode-float64 (funcall r64 buffer))))
+       (declare (ignore type srid))
+       (make-location :lat lat :lng lng ))))
+ :binary-p t)
+
+
 (defun column-name-to-slot-name (column-name)
   (sym (substitute #\- #\_ column-name)))
 
@@ -115,6 +134,12 @@
                      #\')))
   (:method ((x list))
     (format nil "(~{~/dbq::val/~^, ~})" x))
+  (:method ((location location))
+    (if (and (numberp (location-lng location) )
+             (numberp (location-lat location)))
+        (format nil "ST_GeographyFromText('SRID=4326;POINT(~f ~f)')"
+                (location-lng location) (location-lat location))
+        (error "Invalid location value ~a!" location)))
   (:method ((x (eql t)))
     "'t'")
   (:method ((x null))

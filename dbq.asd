@@ -20,6 +20,8 @@
                #:anaphora
                #:cl-ppcre
                #:local-time
+               #:fast-io
+               #:ieee-floats
                #:cl-json
                #:log4cl))
 

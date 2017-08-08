@@ -48,6 +48,11 @@
    #:preload
    #:sql
 
+   #:location
+   #:location-lat
+   #:location-lng
+   #:make-location
+
    #:def-migration
    #:migrate
    #:migrate-down
