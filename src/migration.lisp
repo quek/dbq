@@ -4,7 +4,8 @@
 
 (defun migrate (package)
   (ensure-migration-table)
-  (let* ((migrations (gethash (find-package package) *migrations*))
+  (let* ((migrations (or (gethash (find-package package) *migrations*)
+                         (return-from migrate nil)))
          (keys (sort (loop for key being the hash-key of migrations
                            collect key)
                      #'string< :key #'symbol-name)))
