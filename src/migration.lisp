@@ -12,7 +12,6 @@
           do (migrate-up key (car (gethash key migrations))))))
 
 (defun migrate-down (package version)
-  (ensure-migration-table)
   (let ((migrations (gethash (find-package package) *migrations*)))
     (with-transaction
       (when (execute (format nil "select * from migrations where version = ~/dbq::val/"
