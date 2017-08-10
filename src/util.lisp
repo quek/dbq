@@ -66,21 +66,24 @@
 
 (defstruct location lat lng)
 
-(cl-postgres:set-sql-reader
- 34147
- (lambda (stream size)
-   (declare (ignore size))
-   (fast-io:with-fast-input (buffer nil stream)
-     (let* ((le-p (= 1 (fast-io:readu8 buffer)))
-            (r32 (if le-p #'fast-io:read32-le #'fast-io:read32-be))
-            (r64 (if le-p #'fast-io:read64-le #'fast-io:read64-be))
-            (type (funcall r32 buffer))
-            (srid (funcall r32 buffer))
-            (lng (ieee-floats:decode-float64 (funcall r64 buffer)))
-            (lat (ieee-floats:decode-float64 (funcall r64 buffer))))
-       (declare (ignore type srid))
-       (make-location :lat lat :lng lng ))))
- :binary-p t)
+(defun read-geography-point (stream size)
+  (declare (ignore size))
+  (fast-io:with-fast-input (buffer nil stream)
+    (let* ((le-p (= 1 (fast-io:readu8 buffer)))
+           (r32 (if le-p #'fast-io:read32-le #'fast-io:read32-be))
+           (r64 (if le-p #'fast-io:read64-le #'fast-io:read64-be))
+           (type (funcall r32 buffer))
+           (srid (funcall r32 buffer))
+           (lng (ieee-floats:decode-float64 (funcall r64 buffer)))
+           (lat (ieee-floats:decode-float64 (funcall r64 buffer))))
+      (declare (ignore type srid))
+      (make-location :lat lat :lng lng))))
+
+;;; 環境によって oid が変わる？
+;; 開発環境
+(cl-postgres:set-sql-reader 34147 #'read-geography-point :binary-p t)
+;; ステージング
+(cl-postgres:set-sql-reader 17899 #'read-geography-point :binary-p t)
 
 
 (defun column-name-to-slot-name (column-name)
