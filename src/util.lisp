@@ -79,12 +79,10 @@
       (declare (ignore type srid))
       (make-location :lat lat :lng lng))))
 
-;;; 環境によって oid が変わる？
-;; 開発環境
-(cl-postgres:set-sql-reader 34147 #'read-geography-point :binary-p t)
-;; ステージング
-(cl-postgres:set-sql-reader 17899 #'read-geography-point :binary-p t)
-
+;;; 環境によって oid が変わる？ もっといい方法ないかな？
+(defun enable-read-geography-point ()
+  (let ((typelem (cdaar (execute "select typelem from pg_type where typname='_geography'"))))
+    (cl-postgres:set-sql-reader typelem #'read-geography-point :binary-p t)))
 
 (defun column-name-to-slot-name (column-name)
   (sym (substitute #\- #\_ column-name)))

@@ -52,6 +52,7 @@
    #:location-lat
    #:location-lng
    #:make-location
+   #:enable-read-geography-point
 
    #:def-migration
    #:migrate
