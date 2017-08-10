@@ -52,8 +52,10 @@
   (loop for slot in slots
         if (atom slot)
           do (awhen (assoc slot json :test #'string-equal)
-               (setf (slot-value instance slot)
-                     (cdr it)))
+               (if (slot-exists-p instance slot)
+                   (setf (slot-value instance slot)
+                         (cdr it))
+                   (funcall (fdefinition `(setf ,slot)) (cdr it) instance)))
         else
           do (let* ((slots (cdr slot))
                     (slot (car slot))
