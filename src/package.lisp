@@ -2,7 +2,7 @@
 
 (defpackage :dbq
   (:use :cl :anaphora)
-  (:shadow #:count #:delete)
+  (:shadow #:count #:delete #:<= #:>=)
   (:export
    ;; connection
    #:establish-connection
@@ -47,6 +47,9 @@
    #:per-page
    #:preload
    #:sql
+
+   #:<=
+   #:>=
 
    #:location
    #:location-lat

@@ -7,6 +7,7 @@
                (:file "util")
                (:file "format")
                (:file "connection")
+               (:file "operator")
                (:file "query")
                (:file "dao")
                (:file "hbtm")

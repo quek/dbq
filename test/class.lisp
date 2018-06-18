@@ -1,6 +1,6 @@
 (in-package :dbq.test)
 
-(defclass entry (dao-mixin)
+(defclass entry (dbq:dao-mixin)
   ((title :initarg :title :accessor title-of)
    (content :initarg :content :accessor content-of)
    (user-id :initarg :user-id :accessor user-id-of)
@@ -8,12 +8,12 @@
    (comments :initarg :comments :accessor comments-of)
    (categories :initarg :categories :accessor categories-of)))
 
-(defclass comment (dao-mixin)
+(defclass comment (dbq:dao-mixin)
   ((entry-id :initarg :entry-id :accessor entry-id-of)
    (content :initarg :content :accessor content-of)))
 
-(defclass category (dao-mixin)
+(defclass category (dbq:dao-mixin)
   ((name :initarg :name :accessor name-sf)))
 
-(defclass user (dao-mixin)
+(defclass user (dbq:dao-mixin)
   ((name :initarg :name :accessor name-of)))
