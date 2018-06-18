@@ -102,4 +102,18 @@
   (loop repeat 3 do (dbq:save (make-instance 'entry :title "ねこ" :content "ねねこ")))
   (is (= 3 (dbq:count (dbq:query 'entry (dbq:where :content "ねねこ"))))))
 
+(deftest has-many-through-test ()
+  (let* ((comment1 (make-instance 'comment :content "こめんと1"))
+         (comment2 (make-instance 'comment :content "こめんと2"))
+         (entry1 (make-instance 'entry :title "題名1" :content "本文1"
+                                       :comments (list comment1)))
+         (entry2 (make-instance 'entry :title "題名2" :content "本文2"
+                                       :comments (list comment2)))
+         (user (make-instance 'user :name "こねら"
+                              :entries (list entry1 entry2))))
+    (dbq:save user)
+    (let ((user (dbq:find-by 'user :id (dbq:id-of user))))
+      (dbq:fetch (dbq:query 'user (dbq:join 'comments)))
+      (dbq:fetch (dbq:query (comments-of user))))))
+
 (run-package-tests :interactive t)

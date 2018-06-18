@@ -116,7 +116,9 @@
   (let ((select (query-builder-select query-builder))
         (class (query-builder-from query-builder)))
     (cond (select
-           (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list select)))
+           (if (stringp select)
+               (format out "~a" select)
+               (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list select))))
           ((query-builder-group query-builder)
            (format out "~/dbq::tbl/.*" class))
           ((query-builder-join query-builder)

@@ -16,4 +16,6 @@
   ((name :initarg :name :accessor name-sf)))
 
 (defclass user (dbq:dao-mixin)
-  ((name :initarg :name :accessor name-of)))
+  ((name :initarg :name :accessor name-of)
+   (entries :initarg :entries :accessor entries-of)
+   (comments :initarg :comments :accessor comments-of)))
