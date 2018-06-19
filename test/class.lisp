@@ -10,7 +10,8 @@
 
 (defclass comment (dbq:dao-mixin)
   ((entry-id :initarg :entry-id :accessor entry-id-of)
-   (content :initarg :content :accessor content-of)))
+   (content :initarg :content :accessor content-of)
+   (entry :initarg :entry :accessor entry-of)))
 
 (defclass category (dbq:dao-mixin)
   ((name :initarg :name :accessor name-sf)))

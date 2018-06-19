@@ -9,7 +9,22 @@
                        (has-many-join-clause class through)
                        (has-many-join-clause (sym (singularize through)) slot)))
              (format nil "inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id"
-                     other-class other-class foreign-key-slot class))))
+                     other-class other-class foreign-key-slot class)))
+       (make-through-query (class slot through other-class foreign-key-slot)
+         (let ((through-class (if (has-many-slot-p class through)
+                                  (sym (singularize through))
+                                  through)))
+           `(query ',other-class
+              (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
+              (from ',through-class)
+              (join ',(cond ((has-many-slot-p through-class slot)
+                             slot)
+                            ((belongs-to-slot-p through-class other-class)
+                             other-class)
+                            (t
+                             (error "なんかだめです"))))
+              (where ,(format nil "~/dbq::tbl/.~/dbq::col/" through-class foreign-key-slot)
+                     (id-of instance))))))
 
   (defmacro def-has-many (&key class slot
                             through
@@ -29,12 +44,7 @@
          (if *query-builder*
              (setf *query-builder*
                    ,(if through
-                        `(query ',other-class
-                           (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
-                           (from ',(sym (singularize through)))
-                           (join ',slot)
-                           (where ',(has-many-foreign-key-slot class through)
-                                  (id-of instance)))
+                        (make-through-query class slot through other-class foreign-key-slot)
                         `(query ',other-class
                            (where ',foreign-key-slot (id-of instance)))))
              (setf (slot-value instance slot-name)
@@ -43,9 +53,12 @@
                                 (where ',foreign-key-slot (id-of instance))
                                 (order ,order))))))))))
 
-(defun has-many-slot-p (record slot)
-  (aand  (gethash (class-name (class-of record)) *has-many*)
-         (gethash slot it)))
+(defgeneric has-many-slot-p (x slot)
+  (:method ((class-name symbol) slot)
+    (aand  (gethash class-name *has-many*)
+           (gethash slot it)))
+  (:method (record slot)
+    (has-many-slot-p (class-name (class-of record)) slot)))
 
 (defun has-many-slots (class)
   (aif (gethash class *has-many*)

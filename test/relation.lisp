@@ -9,3 +9,5 @@
 (dbq:def-has-many :class user :slot entries)
 
 (dbq:def-has-many :class user :slot comments :through entries)
+
+(dbq:def-belongs-to :class comment :slot entry)

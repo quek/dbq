@@ -40,9 +40,12 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
        (loop for slot being the hash-keys of it
              collect slot)))
 
-(defun belongs-to-slot-p (record slot)
-  (aand  (gethash (class-name (class-of record)) *belongs-to*)
-         (gethash slot it)))
+(defgeneric belongs-to-slot-p (x slot)
+  (:method ((class-name symbol) slot)
+    (aand  (gethash class-name *belongs-to*)
+           (gethash slot it)))
+  (:method (record slot)
+    (belongs-to-slot-p (class-name (class-of record)) slot)))
 
 (defun preload-belongs-to (records query)
   (loop with class = (query-builder-from query)
