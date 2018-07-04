@@ -22,7 +22,8 @@
                             ((belongs-to-slot-p through-class other-class)
                              other-class)
                             (t
-                             (error "なんかだめです"))))
+                             (error "なんかだめです ~a ~a ~a ~a ~a"
+                                    class through through-class slot other-class))))
               (where ,(format nil "~/dbq::tbl/.~/dbq::col/" through-class foreign-key-slot)
                      (id-of instance))))))
 
