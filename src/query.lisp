@@ -179,7 +179,7 @@
     (if slot
         (setf (slot-value object (sb-mop:slot-definition-name slot))
               value)
-        (format t "no slot for ~a ~a" column value))))
+        (warn "no slot for column: ~a value: ~a!" column value))))
 
 (defun store (class rows)
   (loop for alist in rows
