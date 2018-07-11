@@ -148,5 +148,6 @@
   (:method ((x (eql :null)))
     "null"))
 
-(defun to-foreign-key-column (x)
-  (str (to-column-name x) "_id"))
+(defgeneric to-foreign-key-column (x)
+  (:method  (x)
+    (str (to-column-name x) "_id")))

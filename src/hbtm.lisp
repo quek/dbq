@@ -4,14 +4,16 @@
 
 (defmacro def-hbtm (&key class slot table
                       (other-class (sym (singularize slot)))
+                      (foreign-key (to-foreign-key-column class))
+                      (other-foreign-key (to-foreign-key-column other-class))
                       (join-clause
                        (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.id ~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
                                table
-                               table (sym class "-ID") class
+                               table foreign-key class
                                other-class other-class
-                               table (sym other-class "-ID"))))
+                               table other-foreign-key)))
   `(progn
      (setf (gethash ',slot
                     (or (gethash ',class *hbtm*)
@@ -54,7 +56,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
         if (slot-boundp record slot)
           do (execute (format nil "delete from ~/dbq::tbl/ where ~/dbq::col/=~/dbq::val/"
                               (hbtm-table class slot)
-                              (sym class "-ID")
+                              (to-foreign-key-column class)
                               (id-of record)))
              (loop for x in (slot-value record slot)
                    unless (persistedp x)
