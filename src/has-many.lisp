@@ -16,7 +16,8 @@
                                   through)))
            `(query ',other-class
               (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
-              (from ',through-class)
+              (join ',through)
+              #+nil
               (join ',(cond ((has-many-slot-p through-class slot)
                              slot)
                             ((belongs-to-slot-p through-class other-class)
