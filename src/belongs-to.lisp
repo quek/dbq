@@ -3,7 +3,7 @@
 (defvar *belongs-to* (make-hash-table :test #'eq))
 
 (defmacro def-belongs-to (&key class slot (other-class slot)
-                            (foreign-key-slot (sym other-class "-ID"))
+                            (foreign-key-slot (sym slot "-ID"))
                             (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.id=~/dbq::tbl/.~/dbq::col/"
                                                  other-class other-class class foreign-key-slot))
