@@ -4,7 +4,7 @@
   ((id :initarg :id :accessor id-of)))
 
 (defmethod id= ((a id-mixin) (b id-mixin))
-  (= (id-of a) (id-of b)))
+  (equal (id-of a) (id-of b)))
 
 (defclass created-at-mixin ()
   ((created-at :initarg :created-at :accessor created-at)))
