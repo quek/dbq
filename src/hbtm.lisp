@@ -25,7 +25,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.id = ~/dbq::tbl/.~/dbq::col/"
                  (fetch (query ',class
                           (select ,(format nil "distinct ~/dbq::tbl/.*" other-class))
                           (join ',slot)
-                          (where (format nil "~/dbq::tbl/.id=~/dbq::val/"  class (id-of instance))))
+                          (where (format nil "~/dbq::tbl/.id=~/dbq::val/"
+                                         (to-table-name class) (id-of instance))))
                         :class ',other-class))))))
 
 (defun hbtm-slot-p (record slot)

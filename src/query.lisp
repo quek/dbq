@@ -16,6 +16,9 @@
   (per-page 10)
   preload)
 
+(defmethod to-sql-value ((query-builder query-builder))
+  (format nil "(~a)" (sql query-builder)))
+
 (defgeneric to-query-builder (x)
   (:method ((x query-builder))
     x)
