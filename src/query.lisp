@@ -158,10 +158,11 @@
                                             col
                                             (operator-of val)
                                             (operand-of val)))
-                                   ((atom val)
-                                    (format nil "~/dbq::col/ = ~/dbq::val/" col val))
+                                   ((or (consp val)
+                                        (query-builder-p val))
+                                    (format nil "~/dbq::col/ in ~/dbq::val/" col val))
                                    (t
-                                    (format nil "~/dbq::col/ in ~/dbq::val/" col val)))))))))
+                                    (format nil "~/dbq::col/ = ~/dbq::val/" col val)))))))))
 
 (defun build-group (query-builder out)
   (let ((group (query-builder-group query-builder)))

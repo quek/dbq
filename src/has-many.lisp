@@ -31,7 +31,7 @@
   (defmacro def-has-many (&key class slot
                             through
                             (other-class (sym (singularize slot)))
-                            (foreign-key-slot (sym class "-id"))
+                            (foreign-key-slot (column-name-to-slot-name (to-foreign-key-column class)))
                             (join-clause (make-join-clause class through slot foreign-key-slot other-class))
                             (order (format nil "~/dbq::tbl/.id" other-class)))
     `(progn
