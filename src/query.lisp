@@ -137,6 +137,7 @@
    (loop for join in (query-builder-join query-builder)
          for join-clause = (or (hbtm-join-clause class join)
                                (has-many-join-clause class join)
+                               (has-one-join-clause class join)
                                (belongs-to-join-clause class join))
          if join-clause
            do (write-char #\space out)
@@ -200,7 +201,8 @@
     (when (and results (query-builder-preload query))
       (preload-has-many results query)
       (preload-hbtm results query)
-      (preload-belongs-to results query))
+      (preload-belongs-to results query)
+      (preload-has-one results query))
     results))
 
 (defun find-by (class &rest conditions)

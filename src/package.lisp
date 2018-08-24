@@ -28,6 +28,7 @@
 
    #:def-hbtm
    #:def-has-many
+   #:def-has-one
    #:def-belongs-to
 
    ;;

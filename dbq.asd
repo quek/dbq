@@ -13,6 +13,7 @@
                (:file "hbtm")
                (:file "has-many")
                (:file "belongs-to")
+               (:file "has-one")
                (:file "migration")
                (:file "json"))
   :depends-on (#:alexandria
