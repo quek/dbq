@@ -61,6 +61,4 @@
    #:def-migration
    #:migrate
    #:migrate-down
-
-   #:json
    ))
