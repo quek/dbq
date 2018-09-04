@@ -24,14 +24,19 @@
 (let ((offset (* 60 60
                  (car (last (multiple-value-list
                              (decode-universal-time (get-universal-time))))))))
-  (defun timestamp-reader (useconds-since-2000)
-    (multiple-value-bind (quotient remainder) (floor useconds-since-2000 1000000)
-      (let ((timestamp (local-time:universal-to-timestamp (+ cl-postgres::+start-of-2000+ quotient
-                                                             offset))))
-        (local-time:timestamp+ timestamp (* remainder 1000) :nsec)))))
+  (flet ((timestamp-reader (useconds-since-2000)
+           (multiple-value-bind (quotient remainder) (floor useconds-since-2000 1000000)
+             (let ((timestamp (local-time:universal-to-timestamp (+ cl-postgres::+start-of-2000+ quotient
+                                                                    offset))))
+               (local-time:timestamp+ timestamp (* remainder 1000) :nsec))))
+         (date-reader (days-since-2000)
+           (local-time:universal-to-timestamp
+            (+ cl-postgres::+start-of-2000+
+               (* days-since-2000 cl-postgres::+seconds-in-day+)
+               offset))))
 
-(cl-postgres:set-sql-datetime-readers :timestamp #'timestamp-reader)
-
+    (cl-postgres:set-sql-datetime-readers :timestamp #'timestamp-reader
+                                          :date #'date-reader)))
 
 (defun execute (sql)
   (log4cl:log-debug sql)
