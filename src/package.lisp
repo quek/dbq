@@ -24,6 +24,7 @@
    #:updated-at
    #:has-many
    #:save
+   #:delete
    #:find-by
 
    #:def-hbtm
