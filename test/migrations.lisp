@@ -1,8 +1,7 @@
 (in-package :dbq.test)
 
-;; sudo -u postgres psql
-;; create table dbq_test
-;; alter user ancient with encrypted password 'neko';
+;; sudo -u postgres psql -c "CREATE ROLE ancient LOGIN CREATEDB PASSWORD 'neko';"
+;; sudo -u postgres psql -c "CREATE DATABASE dbq_test OWNER ancient;"
 (let ((db-name "dbq_test"))
   #+nil
   (asdf:run-shell-command
