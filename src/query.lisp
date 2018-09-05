@@ -135,10 +135,10 @@
 (defun build-join (query-builder out)
   (let ((class (query-builder-from query-builder)))
    (loop for join in (query-builder-join query-builder)
-         for join-clause = (or (hbtm-join-clause class join)
-                               (has-many-join-clause class join)
-                               (has-one-join-clause class join)
-                               (belongs-to-join-clause class join))
+         for join-clause = (typecase join
+                             (string join)
+                             (t (slot-value (reldat class join) 'join-clause)))
+
          if join-clause
            do (write-char #\space out)
               (write-string join-clause out))))

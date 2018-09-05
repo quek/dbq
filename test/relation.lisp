@@ -1,13 +1,13 @@
 (in-package :dbq.test)
 
-(dbq:def-has-many :class entry :slot comments :other-class comment)
+(dbq::define-has-many entry comments)
 
-(dbq:def-hbtm :class entry :slot categories :other-class category :table "category_entries")
+(dbq::define-hbtm entry categories "category_entries")
 
-(dbq:def-belongs-to :class entry :slot user)
+(dbq::define-belongs-to entry user)
 
-(dbq:def-has-many :class user :slot entries)
+(dbq::define-has-many user entries)
 
-(dbq:def-has-many :class user :slot comments :through entries)
+(dbq::define-has-many user comments :through entries)
 
-(dbq:def-belongs-to :class comment :slot entry)
+(dbq::define-belongs-to comment entry)
