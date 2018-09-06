@@ -129,9 +129,9 @@
   (:method ((x local-time:timestamp))
     (local-time:format-timestring
      nil x :format '(#\'
-                     :year #\/ :month #\/ :day
+                     (:year 4) #\/ (:month 2) #\/ (:day 2)
                      #\space
-                     :hour #\: :min #\: :sec
+                     (:hour 2) #\: (:min 2) #\: (:sec 2)
                      #\')))
   (:method ((x list))
     (format nil "(~{~/dbq::val/~^, ~})" x))
