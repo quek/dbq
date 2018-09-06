@@ -116,4 +116,39 @@
       (dbq:fetch (dbq:query 'user (dbq:join 'comments)))
       (dbq:fetch (dbq:query (comments-of user))))))
 
+(deftest preload-has-many-test ()
+  (let* ((comment1 (make-instance 'comment :content "こんにちは"))
+         (comment2 (make-instance 'comment :content "こんばんは"))
+         (entry (make-instance 'entry :title "題名" :content "本文"
+                                      :comments (list comment1 comment2))))
+    (dbq:save entry)
+    (let ((entry (car (dbq:fetch (dbq:query 'entry
+                                   (dbq:where :id (dbq:id-of entry))
+                                   (dbq:preload 'comments))))))
+      (is (slot-boundp entry 'comments))
+      (is (= 2 (length (slot-value entry 'comments)))))))
+
+(deftest preload-hbtm-test ()
+  (let* ((category1 (make-instance 'category :name "プログラミング"))
+         (category2 (make-instance 'category :name "読書"))
+         (entry (make-instance 'entry :title "題名" :content "本文"
+                                      :categories (list category1 category2))))
+    (dbq:save entry)
+    (let ((entry (car (dbq:fetch (dbq:query 'entry
+                                   (dbq:where :id (dbq:id-of entry))
+                                   (dbq:preload 'categories))))))
+      (is (slot-boundp entry 'categories))
+      (is (= 2 (length (slot-value entry 'categories)))))))
+
+(deftest preload-belongs-test ()
+  (let* ((user (make-instance 'user :name "こねら"))
+         (entry (make-instance 'entry :title "題名" :content "本文")))
+    (dbq:save user)
+    (setf (user-of entry) user)
+    (dbq:save entry)
+    (let ((entry (car (dbq:fetch (dbq:query 'entry
+                                   (dbq:where :id (dbq:id-of entry))
+                                   (dbq:preload 'user))))))
+      (is (slot-boundp entry 'user)))))
+
 (run-package-tests :interactive t)

@@ -25,14 +25,15 @@ insert into ~/dbq::tbl/ (~/dbq::col/, ~/dbq::col/) values(~/dbq::val/, ~/dbq::va
         with ids = (delete-duplicates (mapcar #'id-of records))
         for slot in (intersection (query-builder-preload query)
                                   (hbtm-slots class))
-        for other-class = (hbtm-other-class class slot)
-        for table = (hbtm-table class slot)
+        for reldat = (reldat class slot)
+        for other-class = (slot-value reldat 'other-class)
+        for table = (slot-value reldat 'table)
         for sql = (format nil "select ~/dbq::tbl/.~/dbq::col/, ~/dbq::tbl/.* ~
 from ~/dbq::tbl/ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/ = ~/dbq::tbl/.id ~
 where ~/dbq::tbl/.~/dbq::col/ in ~/dbq::val/"
-                          table (sym class "-ID") other-class
-                          other-class table table (sym other-class "-ID") other-class
-                          table (sym class "-ID") ids)
+                          table (slot-value reldat 'foreign-key) other-class
+                          other-class table table (slot-value reldat 'other-foreign-key) other-class
+                          table (slot-value reldat 'foreign-key) ids)
         for results = (execute sql)
         do (loop for record in records
                  do (setf (slot-value record slot) nil))
