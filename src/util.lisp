@@ -150,4 +150,4 @@
 
 (defgeneric to-foreign-key (x)
   (:method  (x)
-    (sym (to-column-name x) "-ID")))
+    (sym x "-ID")))

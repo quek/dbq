@@ -110,7 +110,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
     (class slot
      &key (other-class (sym (singularize slot)))
        (primary-key 'id)
-       (foreign-key (sym class "-id"))
+       (foreign-key (to-foreign-key class))
        through
        (join-clause (if through
                         (let ((reldat (reldat class through)))
@@ -151,7 +151,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
     (class slot
      &key (other-class slot)
        (primary-key 'id)
-       (foreign-key (sym slot "-id"))
+       (foreign-key (to-foreign-key slot))
        (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                             other-class other-class primary-key class foreign-key ))
@@ -181,9 +181,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
      &key
        (other-class (sym (singularize slot)))
        (primary-key 'id)
-       (foreign-key (sym class "-id"))
+       (foreign-key (to-foreign-key class))
        (other-primary-key 'id)
-       (other-foreign-key (sym other-class "-id"))
+       (other-foreign-key (to-foreign-key other-class))
        (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
