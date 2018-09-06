@@ -52,4 +52,6 @@
   updated_at timestamp not null)")
   (dbq:execute "drop table if exists users"))
 
+;; (dbq:migrate-down :dbq.test '20180906212700-create-bookmarks)
+
 (dbq:migrate :dbq.test)
