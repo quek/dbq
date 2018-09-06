@@ -13,7 +13,7 @@
         if (and (null through) (slot-boundp record slot))
           do (let ((old-list (fetch (query other-class (where foreign-key-slot id)))))
               (loop for x in (slot-value record slot)
-                    do (setf (slot-value x (has-many-foreign-key-slot class slot))
+                    do (setf (slot-value x (slot-value reldat 'foreign-key))
                              id)
                        (save x)
                        (setf old-list (cl:delete x old-list :test #'id=)))

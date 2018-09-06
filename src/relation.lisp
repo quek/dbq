@@ -181,6 +181,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
   (make-instance 'reldat-hbtm
                  :class class
                  :slot slot
+                 :table table
                  :other-class other-class
                  :primary-key primary-key
                  :foreign-key foreign-key
@@ -188,11 +189,10 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
                  :other-foreign-key other-foreign-key
                  :join-clause join-clause)
   `(defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
-     (if *query-builder*
-         (setf (slot-value instance slot-name)
-               (if (persistedp instance)
-                   (fetch (query ',other-class
-                            (join ,(format nil "~
+     (setf (slot-value instance slot-name)
+           (if (persistedp instance)
+               (fetch (query ',other-class
+                        (join ,(format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
-                                           table table foreign-key other-class other-primary-key))
-                                (where ',foreign-key (slot-value instance ',primary-key)))))))))
+                                       table table other-foreign-key other-class other-primary-key))
+                        (where ',foreign-key (slot-value instance ',primary-key))))))))

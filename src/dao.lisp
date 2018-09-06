@@ -48,12 +48,13 @@
 
 
 (defun update-set (record)
-  (loop for slot in (column-slots record)
+  (loop with class = (class-name (class-of record))
+        for slot in (column-slots record)
         for slot-name = (sb-pcl:slot-definition-name slot)
         if (and (slot-boundp record slot-name)
                 (not (eq 'id slot-name))
                 (not (eq 'created-at slot-name))
-                (normal-column-p record slot-name))
+                (normal-column-p class slot-name))
           append (list slot-name
                        (slot-value record slot-name))))
 
