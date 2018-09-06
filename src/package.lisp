@@ -27,10 +27,10 @@
    #:delete
    #:find-by
 
-   #:def-hbtm
-   #:def-has-many
-   #:def-has-one
-   #:def-belongs-to
+   #:define-hbtm
+   #:define-has-many
+   #:define-has-one
+   #:define-belongs-to
 
    ;;
    #:fetch-one
@@ -52,6 +52,8 @@
 
    #:<=
    #:>=
+
+   #:to-foreign-key
 
    #:location
    #:location-lat
