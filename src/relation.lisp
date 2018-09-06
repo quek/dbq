@@ -3,7 +3,7 @@
 (defvar *reldat* (make-hash-table :test #'eq))
 
 (defclass reldat ()
-  ((class :initarg :slot)
+  ((class :initarg :class)
    (slot :initarg :slot)
    (other-class :initarg :other-class)
    (join-clause :initarg :join-clause)))
@@ -60,15 +60,19 @@
 (defmacro define-has-many
     (class slot
      &key (other-class (sym (singularize slot)))
-       (primary-key 'id)
-       (foreign-key (sym class "-id"))
        through
+       (primary-key 'id)
+       (foreign-key (if through
+                        (to-foreign-key (slot-value (reldat class through) 'other-class))
+                        (to-foreign-key class)))
        (join-clause (if through
-                        ;; TODO
                         (let ((reldat (reldat class through)))
-                         (format nil "~
+                          (format nil "~
+~a ~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
-                                 other-class other-class foreign-key class primary-key))
+                                  (slot-value reldat 'join-clause)
+                                  other-class other-class foreign-key
+                                  (slot-value reldat 'other-class) primary-key))
                         (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                 other-class other-class foreign-key class primary-key)))
@@ -78,6 +82,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                  :slot slot
                  :other-class other-class
                  :foreign-key foreign-key
+                 :primary-key primary-key
                  :through through
                  :join-clause join-clause
                  :order order)
@@ -87,8 +92,11 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                ,(if through
                     (let ((reldat (reldat class through)))
                       `(query ',other-class
-                         (join ,join-clause)
-                         (join ,(slot-value reldat 'join-clause))
+                         (join ,(format nil "~
+inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
+                                        (slot-value reldat 'other-class)
+                                        other-class foreign-key
+                                        (slot-value reldat 'other-class) primary-key))
                          (where ',(slot-value reldat 'foreign-key) (id-of instance))))
                     `(query ',other-class
                        (where ',foreign-key (id-of instance)))))
@@ -146,23 +154,27 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
        (foreign-key (sym slot "-id"))
        (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
-                            other-class other-class primary-key class foreign-key )))
+                            other-class other-class primary-key class foreign-key ))
+       (writer `(setf ,(sym other-class "-OF"))))
   (make-instance 'reldat-belongs-to
                  :class class
                  :slot slot
                  :other-class other-class
                  :foreign-key foreign-key
                  :join-clause join-clause)
-  `(defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
-     (if *query-builder*
-         (setf *query-builder*
-               (query ',other-class
-                 (where ',primary-key (slot-value instance ',foreign-key))))
-         (setf (slot-value instance slot-name)
-               (if (persistedp instance)
-                   (fetch-one (query ',other-class
-                                (where ',primary-key (slot-value instance ',foreign-key))
-                                (limit 1))))))))
+  `(progn
+     (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
+       (if *query-builder*
+           (setf *query-builder*
+                 (query ',other-class
+                   (where ',primary-key (slot-value instance ',foreign-key))))
+           (setf (slot-value instance slot-name)
+                 (if (persistedp instance)
+                     (fetch-one (query ',other-class
+                                  (where ',primary-key (slot-value instance ',foreign-key))
+                                  (limit 1)))))))
+     (defmethod ,writer :after (value (instance ,class))
+       (setf (slot-value instance ',foreign-key) (slot-value value ',primary-key)))))
 
 (defmacro define-hbtm
     (class slot table
