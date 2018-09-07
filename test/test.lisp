@@ -102,7 +102,7 @@
   (loop repeat 3 do (dbq:save (make-instance 'entry :title "ねこ" :content "ねねこ")))
   (is (= 3 (dbq:count (dbq:query 'entry (dbq:where :content "ねねこ"))))))
 
-(deftest has-many-through-test ()
+(deftest has-many-through--has-many-test ()
   (let* ((comment1 (make-instance 'comment :content "こめんと1"))
          (comment2 (make-instance 'comment :content "こめんと2"))
          (entry1 (make-instance 'entry :title "題名1" :content "本文1"
@@ -115,6 +115,30 @@
     (let ((user (dbq:find-by 'user :id (dbq:id-of user))))
       (dbq:fetch (dbq:query 'user (dbq:join 'comments)))
       (dbq:fetch (dbq:query (comments-of user))))))
+
+(deftest has-many-through--belongs-to-test ()
+  (let* ((user1 (make-instance 'user :name "こねら"))
+         (user2 (make-instance 'user :name "おおねら"))
+         (community1 (make-instance 'community :name "ねこねこくらぶ"))
+         (community2 (make-instance 'community :name "おさかな会")))
+    (dbq:save user1)
+    (dbq:save user2)
+    (dbq:save community1)
+    (dbq:save community2)
+    (let ((community-member1 (make-instance 'community-member
+                                            :role "生きもの係"
+                                            :user-id (dbq:id-of user1)
+                                            :community-id (dbq:id-of community1)))
+          (community-member2 (make-instance 'community-member
+                                            :role "かいちょう"
+                                            :user-id (dbq:id-of user2)
+                                            :community-id (dbq:id-of community1))))
+      (dbq:save community-member1)
+      (dbq:save community-member2)
+      (let ((community1 (car (dbq:fetch (dbq:query 'community
+                                          (dbq:where :id (dbq:id-of community1))
+                                          (dbq:join 'users))))))
+        (is (= 2 (length (users-of community1))))))))
 
 (deftest preload-has-many-test ()
   (let* ((comment1 (make-instance 'comment :content "こんにちは"))

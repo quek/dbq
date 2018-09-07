@@ -52,6 +52,24 @@
   updated_at timestamp not null)")
   (dbq:execute "drop table if exists users"))
 
-;; (dbq:migrate-down :dbq.test '20180906212700-create-bookmarks)
+(dbq:def-migration 20180907162850-create-communities
+    (dbq:execute "create table communities (
+  id serial primary key,
+  name varchar(100) not null,
+  created_at timestamp not null,
+  updated_at timestamp not null)")
+  (dbq:execute "drop table if exists communities"))
+
+(dbq:def-migration 20180907163015-create-community-members
+    (dbq:execute "create table community_members (
+  id serial primary key,
+  role varchar(100) not null,
+  user_id integer not null,
+  community_id integer not null,
+  created_at timestamp not null,
+  updated_at timestamp not null)")
+  (dbq:execute "drop table if exists community_members"))
+
+;; (dbq:migrate-down :dbq.test '20180907163015-create-members)
 
 (dbq:migrate :dbq.test)

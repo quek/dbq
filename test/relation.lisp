@@ -11,3 +11,7 @@
 (dbq::define-has-many user comments :through entries)
 
 (dbq::define-belongs-to comment entry)
+
+(dbq::define-has-many community community-members)
+
+(dbq::define-has-many community users :through community-members)
