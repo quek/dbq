@@ -135,10 +135,16 @@
                                             :community-id (dbq:id-of community1))))
       (dbq:save community-member1)
       (dbq:save community-member2)
+
+      (let* ((community1 (car (dbq:fetch (dbq:query 'community
+                                           (dbq:where :id (dbq:id-of community1))))))
+             (users (dbq:fetch (dbq:query (users-of community1)))))
+        (is users))
       (let ((community1 (car (dbq:fetch (dbq:query 'community
-                                          (dbq:where :id (dbq:id-of community1))
+                                          (dbq:where :communities.id (dbq:id-of community1))
                                           (dbq:join 'users))))))
-        (is (= 2 (length (users-of community1))))))))
+        (is (= 2 (length (users-of community1))))
+        ))))
 
 (deftest preload-has-many-test ()
   (let* ((comment1 (make-instance 'comment :content "こんにちは"))
