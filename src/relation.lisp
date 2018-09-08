@@ -269,7 +269,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                  :test #'equal))
          (children (fetch (query other-class
                             (where foreign-key ids)
-                            (awhen (slot-exists-p reldat 'order)
+                            (when (and (slot-exists-p reldat 'order)
+                                       (slot-boundp reldat 'order)
+                                       (slot-value reldat 'order))
                               (order (slot-value reldat 'order)))))))
     (loop for record in records
           do (setf (slot-value record slot)

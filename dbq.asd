@@ -4,6 +4,7 @@
   :serial t
   :pathname "src/"
   :components ((:file "package")
+               (:file "macro")
                (:file "util")
                (:file "format")
                (:file "connection")

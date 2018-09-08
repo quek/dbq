@@ -1,7 +1,5 @@
 (in-package :dbq)
 
-(defvar *query-builder* nil)
-
 (defstruct query-builder
   select
   from
@@ -42,6 +40,7 @@
   *query-builder*)
 
 (defun where (&rest where)
+  (declare (special *query-builder*))
   (setf *query-builder* (copy-query-builder *query-builder*))
   (push where (query-builder-where *query-builder*))
   *query-builder*)
@@ -170,13 +169,6 @@
     (when group
       (format out " group by ~{~/dbq::col/~^ ,~}" (alexandria:ensure-list group)))))
 
-(defmacro query (query-builder &body body)
-  `(let* ((*query-builder* t)
-          (*query-builder* (to-query-builder ,query-builder)))
-     (declare (special *query-builder*))
-     ,@body
-     *query-builder*))
-
 (defun set-value (object value column)
   (let ((slot (find (to-column-name column) (sb-mop:class-slots (class-of object))
                     :test #'string-equal
@@ -196,15 +188,13 @@
 (defun fetch-one (query &key (class (query-builder-from query)))
   (let ((results (store class (execute (sql (query query (limit 1)))))))
     (when (and results (query-builder-preload query))
-      (loop for preload in (query-builder-preload query)
-            do (%preload results (query-builder-from query) preload)))
+      (%preload results (query-builder-from query) (query-builder-preload query)))
     (car results)))
 
 (defun fetch (query &key (class (query-builder-from query)))
   (let ((results (store class (execute (sql query)))))
     (when (and results (query-builder-preload query))
-      (loop for preload in (query-builder-preload query)
-            do (%preload results (query-builder-from query) preload)))
+      (%preload results (query-builder-from query) (query-builder-preload query)))
     results))
 
 (defun find-by (class &rest conditions)
@@ -214,13 +204,15 @@
 (defun count (query)
   (cdaar (execute (count-sql query))))
 
-(defun %preload (records class slot-or-slot-list)
-  (cond ((null slot-or-slot-list))
-        ((atom slot-or-slot-list)
-         (let ((reldat (reldat class slot-or-slot-list)))
-           (reldat-preload reldat records class slot-or-slot-list)))
-        (t
-         (let ((slot (car slot-or-slot-list))
-               (slot-or-slot-list (cdr slot-or-slot-list)))
-           (multiple-value-bind (records class) (%preload records class slot)
-             (%preload records class slot-or-slot-list))))))
+(defun %preload (records class slots)
+  (when slots
+    (let ((x (car slots)))
+      (if (atom x)
+          (let ((reldat (reldat class x)))
+            (multiple-value-bind (records2 class2) (reldat-preload reldat records class x)
+              (%preload records class (cdr slots))
+              (values records2 class2)))
+          (progn
+            (multiple-value-bind (records2 class2) (%preload records class (list (car x)))
+              (%preload records2 class2 (cdr x)))
+            (%preload records class (cdr slots)))))))
