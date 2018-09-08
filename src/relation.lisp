@@ -29,18 +29,30 @@
 (defclass reldat-belongs-to (reldat reldat-foreign-key-mixin)
   ())
 
-(defmethod throu-join-clause ((reldat reldat-through-mixin))
+(defmethod reverse-join-clause ((reldat reldat-through-mixin))
   (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
           (slot-value reldat 'class)
           (slot-value reldat 'other-class) (slot-value reldat 'foreign-key)
           (slot-value reldat 'class) (slot-value reldat 'primary-key) ))
 
-(defmethod throu-join-clause ((reldat reldat-belongs-to))
+(defmethod reverse-join-clause ((reldat reldat-belongs-to))
   (format nil "inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
           (slot-value reldat 'class)
           (slot-value reldat 'other-class) (slot-value reldat 'primary-key)
           (slot-value reldat 'class) (slot-value reldat 'foreign-key) ))
+
+(defmethod reverse-join-clause ((reldat reldat-hbtm))
+  (format nil "~
+inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
+inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
+"
+          (slot-value reldat 'table)
+          (slot-value reldat 'table) (slot-value reldat 'other-foreign-key)
+          (slot-value reldat 'other-class) (slot-value reldat 'other-primary-key)
+          (slot-value reldat 'class)
+          (slot-value reldat 'class) (slot-value reldat 'primary-key)
+          (slot-value reldat 'table) (slot-value reldat 'foreign-key)))
 
 (defmethod initialize-instance :after ((reldat reldat) &key class slot &allow-other-keys)
   (sif (gethash class *reldat*)
@@ -108,7 +120,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                            (through-reldat (or (reldat through-class slot)
                                                (reldat through-class (sym (singularize slot))))))
                       `(query ',other-class
-                         (join ,(throu-join-clause through-reldat))
+                         (join ,(reverse-join-clause through-reldat))
                          (where ',(slot-value reldat 'foreign-key) (id-of instance))))
                     `(query ',other-class
                        (where ',foreign-key (id-of instance)))))
@@ -120,7 +132,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                (through-reldat (or (reldat through-class slot)
                                                    (reldat through-class (sym (singularize slot))))))
                           `(fetch (query ',other-class
-                                    (join ,(throu-join-clause through-reldat))
+                                    (join ,(reverse-join-clause through-reldat))
                                     (where ',(slot-value reldat 'foreign-key) (id-of instance))
                                     ,@(when order `((order ,order))))))
                         `(fetch (query ',other-class
@@ -164,7 +176,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                            (through-reldat (or (reldat through-class slot)
                                                (reldat through-class (sym (singularize slot))))))
                       `(query ',other-class
-                         (join ,(throu-join-clause through-reldat))
+                         (join ,(reverse-join-clause through-reldat))
                          (where ',(slot-value reldat 'foreign-key) (id-of instance))))
                     `(query ',other-class
                        (where ',foreign-key (id-of instance)))))
@@ -176,7 +188,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                (through-reldat (or (reldat through-class slot)
                                                    (reldat through-class (sym (singularize slot))))))
                           `(fetch-one (query ',other-class
-                                        (join ,(throu-join-clause through-reldat))
+                                        (join ,(reverse-join-clause through-reldat))
                                         (where ',(slot-value reldat 'foreign-key) (id-of instance))
                                         ,@(when order `((order ,order)))
                                         (limit 1))))
@@ -247,3 +259,65 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                        table table other-foreign-key other-class other-primary-key))
                         (where ',foreign-key (slot-value instance ',primary-key))))))))
+
+(defmethod reldat-preload ((reldat reldat) records class slot)
+  (let* ((primary-key (slot-value reldat 'primary-key))
+         (foreign-key (slot-value reldat 'foreign-key))
+         (other-class (slot-value reldat 'other-class))
+         (ids (loop for record in records
+                    collect (slot-value record primary-key)))
+         (children (fetch (query other-class
+                                (where foreign-key ids)
+                                (awhen (slot-exists-p reldat 'order)
+                                  (order (slot-value reldat 'order)))))))
+    (loop for record in records
+          do (setf (slot-value record slot) nil))
+    (loop for child in children
+          for record = (find-if (lambda (record)
+                                  (equal (slot-value child foreign-key)
+                                         (slot-value record primary-key)))
+                                records)
+          do (push child (slot-value record slot)))
+    (values children other-class)))
+
+(defmethod reldat-preload ((reldat reldat-hbtm) records class slot)
+  (let* ((primary-key (slot-value reldat 'primary-key))
+         (foreign-key (slot-value reldat 'foreign-key))
+         (other-class (slot-value reldat 'other-class))
+         (table (slot-value reldat 'table))
+         (ids (loop for record in records
+                    collect (slot-value record primary-key)))
+         (recordset (execute (sql (query other-class
+                                    (select (format nil "~/dbq::tbl/.~/dbq::col/, ~/dbq::tbl/.*"
+                                                    table foreign-key class))
+                                    (join (reverse-join-clause reldat))
+                                    (where foreign-key ids))))))
+    (loop for record in records
+          do (setf (slot-value record slot) nil))
+    (values
+     (loop for ((_ . id) . row) in (nreverse recordset)
+           for child = (car (store other-class (list row)))
+           for record = (find id records
+                              :key (lambda (record) (slot-value record primary-key))
+                              :test #'equal)
+           do (push child (slot-value record slot))
+           collect child)
+     other-class)))
+
+(defmethod reldat-preload ((reldat reldat-belongs-to) records class slot)
+  (let* ((primary-key (slot-value reldat 'primary-key))
+         (foreign-key (slot-value reldat 'foreign-key))
+         (other-class (slot-value reldat 'other-class))
+         (ids (loop for record in records
+                    collect (slot-value record primary-key)))
+         (children (fetch (query other-class
+                                (where primary-key ids)))))
+    (loop for record in records
+          do (setf (slot-value record slot) nil))
+    (loop for child in children
+          for record = (find-if (lambda (record)
+                                  (equal (slot-value child foreign-key)
+                                         (slot-value record primary-key)))
+                                records)
+          do (push child (slot-value record slot)))
+    (values children other-class)))

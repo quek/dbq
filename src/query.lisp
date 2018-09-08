@@ -194,15 +194,17 @@
                   object)))
 
 (defun fetch-one (query &key (class (query-builder-from query)))
-  (car (store class (execute (sql (query query (limit 1)))))))
+  (let ((results (store class (execute (sql (query query (limit 1)))))))
+    (when (and results (query-builder-preload query))
+      (loop for preload in (query-builder-preload query)
+            do (%preload results (query-builder-from query) preload)))
+    (car results)))
 
 (defun fetch (query &key (class (query-builder-from query)))
   (let ((results (store class (execute (sql query)))))
     (when (and results (query-builder-preload query))
-      (preload-has-many results query)
-      (preload-hbtm results query)
-      (preload-belongs-to results query)
-      (preload-has-one results query))
+      (loop for preload in (query-builder-preload query)
+            do (%preload results (query-builder-from query) preload)))
     results))
 
 (defun find-by (class &rest conditions)
@@ -211,3 +213,14 @@
 
 (defun count (query)
   (cdaar (execute (count-sql query))))
+
+(defun %preload (records class slot-or-slot-list)
+  (cond ((null slot-or-slot-list))
+        ((atom slot-or-slot-list)
+         (let ((reldat (reldat class slot-or-slot-list)))
+           (reldat-preload reldat records class slot-or-slot-list)))
+        (t
+         (let ((slot (car slot-or-slot-list))
+               (slot-or-slot-list (cdr slot-or-slot-list)))
+           (multiple-value-bind (records class) (%preload records class slot)
+             (%preload records class slot-or-slot-list))))))

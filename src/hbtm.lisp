@@ -19,25 +19,3 @@ insert into ~/dbq::tbl/ (~/dbq::col/, ~/dbq::col/) values(~/dbq::val/, ~/dbq::va
                                        (slot-value reldat 'other-foreign-key)
                                        (slot-value record (slot-value reldat 'primary-key))
                                        (slot-value x (slot-value reldat 'other-primary-key)))))))
-
-(defun preload-hbtm (records query)
-  (loop with class = (query-builder-from query)
-        with ids = (delete-duplicates (mapcar #'id-of records))
-        for slot in (intersection (query-builder-preload query)
-                                  (hbtm-slots class))
-        for reldat = (reldat class slot)
-        for other-class = (slot-value reldat 'other-class)
-        for table = (slot-value reldat 'table)
-        for sql = (format nil "select ~/dbq::tbl/.~/dbq::col/, ~/dbq::tbl/.* ~
-from ~/dbq::tbl/ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/ = ~/dbq::tbl/.id ~
-where ~/dbq::tbl/.~/dbq::col/ in ~/dbq::val/"
-                          table (slot-value reldat 'foreign-key) other-class
-                          other-class table table (slot-value reldat 'other-foreign-key) other-class
-                          table (slot-value reldat 'foreign-key) ids)
-        for results = (execute sql)
-        do (loop for record in records
-                 do (setf (slot-value record slot) nil))
-           (loop for ((_ . id) . row) in (nreverse results)
-                 for child = (car (store other-class (list row)))
-                 for record = (find id records :key #'dbq:id-of)
-                 do (push child (slot-value record slot)))))

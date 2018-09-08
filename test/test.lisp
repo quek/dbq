@@ -181,4 +181,22 @@
                                    (dbq:preload 'user))))))
       (is (slot-boundp entry 'user)))))
 
+(deftest preload-multi-tables-test ()
+  (let* ((comment1 (make-instance 'comment :content "a1"))
+         (comment2 (make-instance 'comment :content "a2"))
+         (comment3 (make-instance 'comment :content "b1"))
+         (comment4 (make-instance 'comment :content "b2"))
+         (entry1 (make-instance 'entry :title "a" :content "aa"
+                                       :comments (list comment1 comment2)))
+         (entry2 (make-instance 'entry :title "b" :content "bb"
+                                       :comments (list comment3 comment4)))
+         (user (make-instance 'user :name "こねら"
+                                    :entries (list entry1 entry2))))
+    (dbq:save user)
+    (let ((user (car (dbq:fetch (dbq:query 'user
+                                  (dbq:where :id (dbq:id-of user))
+                                  (dbq:preload '(entries comments)))))))
+      (is (slot-boundp user 'entries))
+      (is (slot-boundp (car (entries-of user)) 'comments)))))
+
 (run-package-tests :interactive t)
