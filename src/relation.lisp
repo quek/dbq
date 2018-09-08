@@ -264,20 +264,19 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
   (let* ((primary-key (slot-value reldat 'primary-key))
          (foreign-key (slot-value reldat 'foreign-key))
          (other-class (slot-value reldat 'other-class))
-         (ids (loop for record in records
-                    collect (slot-value record primary-key)))
+         (ids (delete-duplicates (loop for record in records
+                                       collect (slot-value record primary-key))
+                                 :test #'equal))
          (children (fetch (query other-class
-                                (where foreign-key ids)
-                                (awhen (slot-exists-p reldat 'order)
-                                  (order (slot-value reldat 'order)))))))
+                            (where foreign-key ids)
+                            (awhen (slot-exists-p reldat 'order)
+                              (order (slot-value reldat 'order)))))))
     (loop for record in records
-          do (setf (slot-value record slot) nil))
-    (loop for child in children
-          for record = (find-if (lambda (record)
-                                  (equal (slot-value child foreign-key)
-                                         (slot-value record primary-key)))
-                                records)
-          do (push child (slot-value record slot)))
+          do (setf (slot-value record slot)
+                   (loop for child in children
+                         if (equal (slot-value child foreign-key)
+                                   (slot-value record primary-key))
+                           collect child)))
     (values children other-class)))
 
 (defmethod reldat-preload ((reldat reldat-hbtm) records class slot)
@@ -285,39 +284,42 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
          (foreign-key (slot-value reldat 'foreign-key))
          (other-class (slot-value reldat 'other-class))
          (table (slot-value reldat 'table))
-         (ids (loop for record in records
-                    collect (slot-value record primary-key)))
+         (ids (delete-duplicates (loop for record in records
+                                       collect (slot-value record primary-key))
+                                 :test #'equal))
          (recordset (execute (sql (query other-class
                                     (select (format nil "~/dbq::tbl/.~/dbq::col/, ~/dbq::tbl/.*"
                                                     table foreign-key class))
                                     (join (reverse-join-clause reldat))
                                     (where foreign-key ids))))))
-    (loop for record in records
-          do (setf (slot-value record slot) nil))
-    (values
-     (loop for ((_ . id) . row) in (nreverse recordset)
-           for child = (car (store other-class (list row)))
-           for record = (find id records
-                              :key (lambda (record) (slot-value record primary-key))
-                              :test #'equal)
-           do (push child (slot-value record slot))
-           collect child)
-     other-class)))
+
+
+    (let ((id_children (loop for ((_ . id) . row) in (nreverse recordset)
+                             collect (cons id (car (store other-class (list row)))))))
+      (loop for record in records
+            do (setf (slot-value record slot)
+                     (loop for (id . child) in id_children
+                           if (equal id (slot-value record primary-key))
+                             collect child)))
+      (values (loop for (id . child) in id_children
+                    collect child)
+              other-class))))
 
 (defmethod reldat-preload ((reldat reldat-belongs-to) records class slot)
   (let* ((primary-key (slot-value reldat 'primary-key))
          (foreign-key (slot-value reldat 'foreign-key))
          (other-class (slot-value reldat 'other-class))
-         (ids (loop for record in records
-                    collect (slot-value record primary-key)))
+         (ids (delete-duplicates (loop for record in records
+                                       collect (slot-value record foreign-key))
+                                 :test #'equal))
          (children (fetch (query other-class
-                                (where primary-key ids)))))
+                            (where primary-key ids)))))
     (loop for record in records
           do (setf (slot-value record slot) nil))
-    (loop for child in children
-          for record = (find-if (lambda (record)
-                                  (equal (slot-value child foreign-key)
-                                         (slot-value record primary-key)))
-                                records)
-          do (push child (slot-value record slot)))
+    (loop for record in records
+          for child = (find-if (lambda (child)
+                                 (equal (slot-value child primary-key)
+                                        (slot-value record foreign-key)))
+                               children)
+          do (setf (slot-value record slot) child))
     (values children other-class)))

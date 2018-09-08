@@ -143,8 +143,7 @@
       (let ((community1 (car (dbq:fetch (dbq:query 'community
                                           (dbq:where :communities.id (dbq:id-of community1))
                                           (dbq:join 'users))))))
-        (is (= 2 (length (users-of community1))))
-        ))))
+        (is (= 2 (length (users-of community1))))))))
 
 (deftest preload-has-many-test ()
   (let* ((comment1 (make-instance 'comment :content "こんにちは"))
@@ -197,6 +196,7 @@
                                   (dbq:where :id (dbq:id-of user))
                                   (dbq:preload '(entries comments)))))))
       (is (slot-boundp user 'entries))
-      (is (slot-boundp (car (entries-of user)) 'comments)))))
+      (is (slot-boundp (car (entries-of user)) 'comments))
+      (is (= 2 (length (comments-of (car (entries-of user)))) )))))
 
 (run-package-tests :interactive t)
