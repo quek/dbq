@@ -198,7 +198,7 @@
     results))
 
 (defun find-by (class &rest conditions)
-  (let ((query (query class (apply #'where conditions))))
+  (let ((query (query class (when conditions (apply #'where conditions)))))
    (fetch-one query :class (query-builder-from query))))
 
 (defun count (query)

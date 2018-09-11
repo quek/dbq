@@ -22,3 +22,21 @@
 
 (defun >= (operand)
   (make-instance `>= :operand operand))
+
+(defclass < (operator)
+  ())
+
+(defmethod operator-of ((op <))
+  "<")
+
+(defun < (operand)
+  (make-instance `< :operand operand))
+
+(defclass > (operator)
+  ())
+
+(defmethod operator-of ((op >))
+  ">")
+
+(defun > (operand)
+  (make-instance `> :operand operand))

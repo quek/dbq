@@ -9,7 +9,7 @@
                (len (length string))
                (last-char-raw (char string (1- len)))
                (last-char (char-upcase last-char-raw))
-               (penult-char (char-upcase (if (> len 1)
+               (penult-char (char-upcase (if (cl:> len 1)
                                              (char string (- len 2))
                                              #\Nul))) ;dummy
                (last-3 (subseq string (max 0 (- len 3)))))
