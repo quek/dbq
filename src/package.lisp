@@ -26,6 +26,8 @@
    #:.updated-at
    #:has-many
    #:save
+   #:create
+   #:update
    #:delete
    #:find-by
 

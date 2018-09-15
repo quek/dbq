@@ -197,9 +197,9 @@
       (%preload results (query-builder-from query) (query-builder-preload query)))
     results))
 
-(defun find-by (class &rest conditions)
-  (let ((query (query class (when conditions (apply #'where conditions)))))
-   (fetch-one query :class (query-builder-from query))))
+(defmacro find-by (class &rest conditions)
+  `(fetch-one (query ,class ,@(awhen conditions
+                                `((where ,@it))))))
 
 (defun count (query)
   (cdaar (execute (count-sql query))))
