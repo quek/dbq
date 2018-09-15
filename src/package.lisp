@@ -21,7 +21,9 @@
    #:.id
    #:id=
    #:created-at
+   #:.created-at
    #:updated-at
+   #:.updated-at
    #:has-many
    #:save
    #:delete
