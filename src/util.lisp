@@ -136,11 +136,16 @@
   (:method ((x list))
     (format nil "(~{~/dbq::val/~^, ~})" x))
   (:method ((location location))
-    (if (and (numberp (location-lng location) )
-             (numberp (location-lat location)))
-        (format nil "ST_GeographyFromText('SRID=4326;POINT(~f ~f)')"
-                (location-lng location) (location-lat location))
-        (error "Invalid location value ~a!" location)))
+    (cond ((and (stringp (location-lng location))
+                (stringp (location-lat location)))
+           (format nil "ST_GeographyFromText('SRID=4326;POINT(~a ~a)')"
+                   (location-lng location) (location-lat location)))
+          ((and (numberp (location-lng location))
+                (numberp (location-lat location)))
+           (format nil "ST_GeographyFromText('SRID=4326;POINT(~f ~f)')"
+                   (location-lng location) (location-lat location)))
+          (t
+           (error "Invalid location value ~a!" location))))
   (:method ((x (eql t)))
     "'t'")
   (:method ((x null))

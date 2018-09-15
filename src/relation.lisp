@@ -121,9 +121,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                                (reldat through-class (sym (singularize slot))))))
                       `(query ',other-class
                          (join ,(reverse-join-clause through-reldat))
-                         (where ',(slot-value reldat 'foreign-key) (id-of instance))))
+                         (where ',(slot-value reldat 'foreign-key) (.id instance))))
                     `(query ',other-class
-                       (where ',foreign-key (id-of instance)))))
+                       (where ',foreign-key (.id instance)))))
          (setf (slot-value instance slot-name)
                (if (persistedp instance)
                    ,(if through
@@ -133,10 +133,10 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                                    (reldat through-class (sym (singularize slot))))))
                           `(fetch (query ',other-class
                                     (join ,(reverse-join-clause through-reldat))
-                                    (where ',(slot-value reldat 'foreign-key) (id-of instance))
+                                    (where ',(slot-value reldat 'foreign-key) (.id instance))
                                     ,@(when order `((order ,order))))))
                         `(fetch (query ',other-class
-                                  (where ',foreign-key (id-of instance))
+                                  (where ',foreign-key (.id instance))
                                   ,@(when order `((order ,order)))))))))))
 
 (defmacro define-has-one
@@ -177,9 +177,9 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                                (reldat through-class (sym (singularize slot))))))
                       `(query ',other-class
                          (join ,(reverse-join-clause through-reldat))
-                         (where ',(slot-value reldat 'foreign-key) (id-of instance))))
+                         (where ',(slot-value reldat 'foreign-key) (.id instance))))
                     `(query ',other-class
-                       (where ',foreign-key (id-of instance)))))
+                       (where ',foreign-key (.id instance)))))
          (setf (slot-value instance slot-name)
                (if (persistedp instance)
                    ,(if through
@@ -189,11 +189,11 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                                    (reldat through-class (sym (singularize slot))))))
                           `(fetch-one (query ',other-class
                                         (join ,(reverse-join-clause through-reldat))
-                                        (where ',(slot-value reldat 'foreign-key) (id-of instance))
+                                        (where ',(slot-value reldat 'foreign-key) (.id instance))
                                         ,@(when order `((order ,order)))
                                         (limit 1))))
                         `(fetch-one (query ',other-class
-                                      (where ',foreign-key (id-of instance))
+                                      (where ',foreign-key (.id instance))
                                       ,@(when order `((order ,order)))
                                       (limit 1)))))))))
 
@@ -205,7 +205,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
        (join-clause (format nil "~
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                             other-class other-class primary-key class foreign-key ))
-       (writer `(setf ,(sym other-class "-OF"))))
+       (writer `(setf ,(sym "." other-class))))
   (make-instance 'reldat-belongs-to
                  :class class
                  :slot slot

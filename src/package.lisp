@@ -18,7 +18,7 @@
    #:updated-at-mixin
    #:dao-mixin
    #:id
-   #:id-of
+   #:.id
    #:id=
    #:created-at
    #:updated-at

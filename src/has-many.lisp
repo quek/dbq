@@ -3,7 +3,7 @@
 (defun update-has-many (record)
   "新しいリストにないものは削除してみよう。
 問題があるようなら _delete スロット追加とか検討する。"
-  (loop with id = (id-of record)
+  (loop with id = (.id record)
         with class = (class-name (class-of record))
         for slot in (has-many-slots class)
         for reldat = (reldat class slot)

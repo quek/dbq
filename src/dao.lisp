@@ -1,16 +1,16 @@
 (in-package :dbq)
 
 (defclass id-mixin ()
-  ((id :initarg :id :accessor id-of)))
+  ((id :initarg :id :accessor .id)))
 
 (defmethod id= ((a id-mixin) (b id-mixin))
-  (equal (id-of a) (id-of b)))
+  (equal (.id a) (.id b)))
 
 (defclass created-at-mixin ()
-  ((created-at :initarg :created-at :accessor created-at)))
+  ((created-at :initarg :created-at :accessor .created-at)))
 
 (defclass updated-at-mixin ()
-  ((updated-at :initarg :updated-at :accessor updated-at)))
+  ((updated-at :initarg :updated-at :accessor .updated-at)))
 
 (defclass dao-mixin (id-mixin created-at-mixin updated-at-mixin)
   ())
