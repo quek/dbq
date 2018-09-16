@@ -16,7 +16,8 @@
                (:file "has-many")
                (:file "belongs-to")
                (:file "has-one")
-               (:file "migration"))
+               (:file "migration")
+               (:file "series"))
   :depends-on (#:alexandria
                #:postmodern
                #:closer-mop
@@ -25,5 +26,6 @@
                #:local-time
                #:fast-io
                #:ieee-floats
-               #:log4cl))
+               #:log4cl
+               #:series))
 

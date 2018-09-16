@@ -39,6 +39,7 @@
    ;;
    #:fetch-one
    #:fetch
+   #:scan-query
    #:count
    #:query
    #:select
