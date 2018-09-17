@@ -1,7 +1,5 @@
 (in-package :dbq)
 
-(defconstant +unbound+ '+unbound+)
-
 (defstruct query-builder
   select
   from
@@ -14,11 +12,7 @@
   offset
   page
   (per-page 10)
-  preload
-  (result +unbound+))
-
-(defun query-fetched-p (query)
-  (not (eq (query-builder-result query) +unbound+)))
+  preload)
 
 (defmethod to-sql-value ((query-builder query-builder))
   (format nil "(~a)" (sql query-builder)))
@@ -198,12 +192,10 @@
     (car results)))
 
 (defun fetch (query &key (class (query-builder-from query)))
-  (if (query-fetched-p query)
-      (query-builder-result query)
-      (let ((results (store class (execute (sql query)))))
-        (when (and results (query-builder-preload query))
-          (%preload results (query-builder-from query) (query-builder-preload query)))
-        (setf (query-builder-result query) results))))
+  (let ((results (store class (execute (sql query)))))
+    (when (and results (query-builder-preload query))
+      (%preload results (query-builder-from query) (query-builder-preload query)))
+    results))
 
 (defmacro find-by (class &rest conditions)
   `(fetch-one (query ,class ,@(awhen conditions
