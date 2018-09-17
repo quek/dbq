@@ -2,7 +2,7 @@
 
 (defconstant +unbound+ '+unbound+)
 
-(defstruct (query-builder (:copier %copy-query-builder))
+(defstruct query-builder
   select
   from
   join
@@ -19,14 +19,6 @@
 
 (defun query-fetched-p (query)
   (not (eq (query-builder-result query) +unbound+)))
-
-(defun unbound-query-result (query)
-  (setf (query-builder-result query) +unbound+))
-
-(defun copy-query-builder (query)
-  (let ((query (%copy-query-builder query)))
-    (unbound-query-result query)
-    query))
 
 (defmethod to-sql-value ((query-builder query-builder))
   (format nil "(~a)" (sql query-builder)))
