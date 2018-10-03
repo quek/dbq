@@ -133,14 +133,26 @@
 
 (defun build-join (query-builder out)
   (let ((class (query-builder-from query-builder)))
-   (loop for join in (query-builder-join query-builder)
-         for join-clause = (typecase join
-                             (string join)
-                             (t (slot-value (reldat class join) 'join-clause)))
+    (%build-join class (query-builder-join query-builder) out)))
 
-         if join-clause
-           do (write-char #\space out)
-              (write-string join-clause out))))
+(defun %build-join (class joins out)
+  (when joins
+    (let ((x (car joins)))
+      (cond ((stringp x)
+             (write-char #\space out)
+             (write-string x out)
+             (%build-join class (cdr joins) out))
+            ((symbolp x)
+             (write-char #\space out)
+             (write-string (slot-value (reldat class x) 'join-clause) out)
+             (%build-join class (cdr joins) out))
+            (t
+             (let* ((xx (car x))
+                    (reldat (reldat class xx)))
+               (write-char #\space out)
+               (write-string (slot-value reldat 'join-clause) out)
+               (%build-join (slot-value reldat 'other-class) (cdr x) out)
+               (%build-join class (cdr joins) out)))))))
 
 (defun build-where (query-builder out)
   (let ((wheres (query-builder-where query-builder)))
