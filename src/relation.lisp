@@ -119,9 +119,19 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                            (through-class (slot-value reldat 'other-class))
                            (through-reldat (or (reldat through-class slot)
                                                (reldat through-class (sym (singularize slot))))))
-                      `(query ',other-class
-                         (join ,(reverse-join-clause through-reldat))
-                         (where ',(slot-value reldat 'foreign-key) (.id instance))))
+                      ;; TODO ここ再帰にしないどだめ
+                      (if (and (slot-exists-p reldat 'through)
+                               (slot-boundp reldat 'through)
+                               (slot-value reldat 'through))
+                          (let* ((x (reldat class (slot-value reldat 'through)))
+                                 (y (reldat (slot-value x 'other-class) through)))
+                            `(query ',other-class
+                               (join ,(reverse-join-clause through-reldat))
+                               (join ,(reverse-join-clause y))
+                               (where ',(slot-value x 'foreign-key) (.id instance))))
+                          `(query ',other-class
+                             (join ,(reverse-join-clause through-reldat))
+                             (where ',(slot-value reldat 'foreign-key) (.id instance)))))
                     `(query ',other-class
                        (where ',foreign-key (.id instance)))))
          (setf (slot-value instance slot-name)
@@ -131,10 +141,21 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                (through-class (slot-value reldat 'other-class))
                                (through-reldat (or (reldat through-class slot)
                                                    (reldat through-class (sym (singularize slot))))))
-                          `(fetch (query ',other-class
-                                    (join ,(reverse-join-clause through-reldat))
-                                    (where ',(slot-value reldat 'foreign-key) (.id instance))
-                                    ,@(when order `((order ,order))))))
+                          ;; TODO ここ再帰にしないどだめ
+                          (if (and (slot-exists-p reldat 'through)
+                                   (slot-boundp reldat 'through)
+                                   (slot-value reldat 'through))
+                              (let* ((x (reldat class (slot-value reldat 'through)))
+                                     (y (reldat (slot-value x 'other-class) through)))
+                                `(fetch (query ',other-class
+                                          (join ,(reverse-join-clause through-reldat))
+                                          (join ,(reverse-join-clause y))
+                                          (where ',(slot-value x 'foreign-key) (.id instance))
+                                          ,@(when order `((order ,order))))))
+                              `(fetch (query ',other-class
+                                        (join ,(reverse-join-clause through-reldat))
+                                        (where ',(slot-value reldat 'foreign-key) (.id instance))
+                                        ,@(when order `((order ,order)))))))
                         `(fetch (query ',other-class
                                   (where ',foreign-key (.id instance))
                                   ,@(when order `((order ,order)))))))))))
