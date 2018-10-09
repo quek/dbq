@@ -180,7 +180,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
 inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                 other-class other-class foreign-key class primary-key)))
        order)
-  (make-instance 'reldat-has-many
+  (make-instance 'reldat-has-one
                  :class class
                  :slot slot
                  :other-class other-class
@@ -281,7 +281,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                                        table table other-foreign-key other-class other-primary-key))
                         (where ',foreign-key (slot-value instance ',primary-key))))))))
 
-(defmethod reldat-preload ((reldat reldat) records class slot)
+(defmethod reldat-preload ((reldat reldat-has-many) records class slot)
   (let* ((primary-key (slot-value reldat 'primary-key))
          (foreign-key (slot-value reldat 'foreign-key))
          (other-class (slot-value reldat 'other-class))
@@ -300,6 +300,27 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                          if (equal (slot-value child foreign-key)
                                    (slot-value record primary-key))
                            collect child)))
+    (values children other-class)))
+
+(defmethod reldat-preload ((reldat reldat-has-one) records class slot)
+  (let* ((primary-key (slot-value reldat 'primary-key))
+         (foreign-key (slot-value reldat 'foreign-key))
+         (other-class (slot-value reldat 'other-class))
+         (ids (delete-duplicates (loop for record in records
+                                       collect (slot-value record primary-key))
+                                 :test #'equal))
+         (children (fetch (query other-class
+                            (where foreign-key ids)
+                            (when (and (slot-exists-p reldat 'order)
+                                       (slot-boundp reldat 'order)
+                                       (slot-value reldat 'order))
+                              (order (slot-value reldat 'order)))))))
+    (loop for record in records
+          do (setf (slot-value record slot)
+                   (loop for child in children
+                         thereis (and (equal (slot-value child foreign-key)
+                                             (slot-value record primary-key))
+                                      child))))
     (values children other-class)))
 
 (defmethod reldat-preload ((reldat reldat-hbtm) records class slot)
