@@ -107,7 +107,10 @@
 
 (defun count-sql (query-builder)
   (with-output-to-string (out)
-    (write-string "select count(*)" out)
+    (if (query-builder-group query-builder)
+        (format out "select count(*), ~{~/dbq::col/~^ ,~}"
+                (alexandria:ensure-list (query-builder-group query-builder)))
+        (write-string "select count(*)" out))
     (build-from query-builder out)
     (build-join query-builder out)
     (build-where query-builder out)
@@ -214,7 +217,15 @@
                                 `((where ,@it))))))
 
 (defun count (query)
-  (cdaar (execute (count-sql query))))
+  (let ((result (execute (count-sql query))))
+    (if (query-builder-group query)
+        (loop for ((_ . count) . groups) in result
+              collect (cons
+                       (if (= (length groups) 1)
+                           (cdar groups)
+                           (mapcar #'cdr groups))
+                       count))
+        (cdaar result))))
 
 (defun %preload (records class slots)
   (when slots
