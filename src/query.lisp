@@ -228,7 +228,7 @@
         (cdaar result))))
 
 (defun %preload (records class slots)
-  (when slots
+  (when (and records slots)
     (let ((x (car slots)))
       (if (atom x)
           (let ((reldat (reldat class x)))
