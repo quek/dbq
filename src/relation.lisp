@@ -225,12 +225,10 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                               `(fetch-one (query ',other-class
                                             (join ,(reverse-join-clause through-reldat))
                                             (where ',(slot-value reldat 'foreign-key) (.id instance))
-                                            ,@(when order `((order ,order)))
-                                            (limit 1))))
+                                            ,@(when order `((order ,order))))))
                             `(fetch-one (query ',other-class
                                           (where foreign-key (.id instance))
-                                          ,@(when order `((order ,order)))
-                                          (limit 1)))))))))))
+                                          ,@(when order `((order ,order)))))))))))))
 
 (defmacro define-belongs-to
     (class slot
