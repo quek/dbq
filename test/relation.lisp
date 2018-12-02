@@ -17,3 +17,7 @@
 (dbq::define-belongs-to community-member user)
 
 (dbq::define-has-many community users :through community-members)
+
+(dbq::define-has-many community entries :through users)
+
+(dbq::define-has-many community comments :through entries)

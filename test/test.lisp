@@ -145,6 +145,29 @@
                                           (dbq:join 'users))))))
         (is (= 2 (length (.users community1))))))))
 
+(deftest nested-through-test ()
+  (let* ((comment1 (make-instance 'comment :content "こめんと1"))
+         (comment2 (make-instance 'comment :content "こめんと2"))
+         (entry1 (make-instance 'entry :title "題名1" :content "本文1"
+                                       :comments (list comment1)))
+         (entry2 (make-instance 'entry :title "題名2" :content "本文2"
+                                       :comments (list comment2)))
+         (user (make-instance 'user :name "こねら"
+                                    :entries (list entry1 entry2)))
+         (community (make-instance 'community :name "ねこねこくらぶ")))
+    (dbq:save user)
+    (dbq:save community)
+    (dbq:save (make-instance 'community-member
+                             :role "生きもの係"
+                             :user-id (dbq:.id user)
+                             :community-id (dbq:.id community)))
+    (let ((community (dbq:find-by 'community :id (dbq:.id community))))
+      (is (equal "こめんと2"
+                 (.content (dbq:fetch-one (dbq:query (.comments community)
+                                            (dbq:where :comments.content "こめんと2"))))))
+      (is (equal '("こめんと1" "こめんと2")
+                 (mapcar #'.content (.comments community)))))))
+
 (deftest preload-has-many-test ()
   (let* ((comment1 (make-instance 'comment :content "こんにちは"))
          (comment2 (make-instance 'comment :content "こんばんは"))

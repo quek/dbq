@@ -82,6 +82,20 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
   (defun hbtm-slots (class)
     (f class 'reldat-hbtm)))
 
+(defun compute-throughable-join-clause (class slot through)
+  (if through
+      (let* ((reldat (reldat class through))
+             (through-class (slot-value reldat 'other-class))
+             (through-reldat (or (reldat through-class slot)
+                                 (reldat through-class (sym (singularize slot))))))
+        (cons
+         `(join ,(reverse-join-clause through-reldat))
+         (compute-throughable-join-clause
+          class through (and (slot-exists-p reldat 'through)
+                             (slot-boundp reldat 'through)
+                             (slot-value reldat 'through)))))
+      nil))
+
 (defmacro define-has-many (class slot
                            &key (other-class (sym (singularize slot)))
                              through
@@ -91,9 +105,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
                              order)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (let* ((foreign-key ,(or foreign-key
-                              (if through
-                                  `(to-foreign-key (slot-value (reldat ',class ',through) 'other-class))
-                                  `(to-foreign-key ',class))))
+                              `(to-foreign-key ',class)))
             (join-clause ,(or join-clause
                               (if through
                                   `(let* ((reldat (reldat ',class ',through))
@@ -122,51 +134,17 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
        (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
          (if *query-builder*
              (setf *query-builder*
-                   ,(if through
-                        (let* ((reldat (reldat class through))
-                               (through-class (slot-value reldat 'other-class))
-                               (through-reldat (or (reldat through-class slot)
-                                                   (reldat through-class (sym (singularize slot))))))
-                          ;; TODO ここ再帰にしないどだめ
-                          (if (and (slot-exists-p reldat 'through)
-                                   (slot-boundp reldat 'through)
-                                   (slot-value reldat 'through))
-                              (let* ((x (reldat class (slot-value reldat 'through)))
-                                     (y (reldat (slot-value x 'other-class) through)))
-                                `(query ',other-class
-                                   (join ,(reverse-join-clause through-reldat))
-                                   (join ,(reverse-join-clause y))
-                                   (where ',(slot-value x 'foreign-key) (.id instance))))
-                              `(query ',other-class
-                                 (join ,(reverse-join-clause through-reldat))
-                                 (where ',(slot-value reldat 'foreign-key) (.id instance)))))
-                        `(query ',other-class
-                           (where foreign-key (.id instance)))))
+                   (query ',other-class
+                     ,@(compute-throughable-join-clause class slot through)
+                     (where foreign-key (.id instance))
+                     ,@(when order `((order ,order)))))
              (setf (slot-value instance slot-name)
                    (if (persistedp instance)
-                       ,(if through
-                            (let* ((reldat (reldat class through))
-                                   (through-class (slot-value reldat 'other-class))
-                                   (through-reldat (or (reldat through-class slot)
-                                                       (reldat through-class (sym (singularize slot))))))
-                              ;; TODO ここ再帰にしないどだめ
-                              (if (and (slot-exists-p reldat 'through)
-                                       (slot-boundp reldat 'through)
-                                       (slot-value reldat 'through))
-                                  (let* ((x (reldat class (slot-value reldat 'through)))
-                                         (y (reldat (slot-value x 'other-class) through)))
-                                    `(fetch (query ',other-class
-                                              (join ,(reverse-join-clause through-reldat))
-                                              (join ,(reverse-join-clause y))
-                                              (where ',(slot-value x 'foreign-key) (.id instance))
-                                              ,@(when order `((order ,order))))))
-                                  `(fetch (query ',other-class
-                                            (join ,(reverse-join-clause through-reldat))
-                                            (where ',(slot-value reldat 'foreign-key) (.id instance))
-                                            ,@(when order `((order ,order)))))))
-                            `(fetch (query ',other-class
-                                      (where foreign-key (.id instance))
-                                      ,@(when order `((order ,order)))))))))))))
+                       (fetch
+                        (query ',other-class
+                          ,@(compute-throughable-join-clause class slot through)
+                          (where foreign-key (.id instance))
+                          ,@(when order `((order ,order))))))))))))
 
 (defmacro define-has-one (class slot
                           &key (other-class (sym (singularize slot)))
@@ -177,9 +155,7 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                             order)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (let* ((foreign-key ,(or foreign-key
-                              (if through
-                                  `(to-foreign-key (slot-value (reldat ',class ',through) 'other-class))
-                                  `(to-foreign-key ',class))))
+                              `(to-foreign-key ',class)))
             (join-clause ,(or join-clause
                               (if through
                                   `(let* ((reldat (reldat ',class ',through))
@@ -202,33 +178,21 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                       :primary-key ',primary-key
                       :through ',through
                       :join-clause join-clause)
+
        (defmethod slot-unbound (class (instance ,class) (slot-name (eql ',slot)))
          (if *query-builder*
              (setf *query-builder*
-                   ,(if through
-                        (let* ((reldat (reldat class through))
-                               (through-class (slot-value reldat 'other-class))
-                               (through-reldat (or (reldat through-class slot)
-                                                   (reldat through-class (sym (singularize slot))))))
-                          `(query ',other-class
-                             (join ,(reverse-join-clause through-reldat))
-                             (where ',(slot-value reldat 'foreign-key) (.id instance))))
-                        `(query ',other-class
-                           (where foreign-key (.id instance)))))
+                   (query ',other-class
+                     ,@(compute-throughable-join-clause class slot through)
+                     (where foreign-key (.id instance))
+                     ,@(when order `((order ,order)))))
              (setf (slot-value instance slot-name)
                    (if (persistedp instance)
-                       ,(if through
-                            (let* ((reldat (reldat class through))
-                                   (through-class (slot-value reldat 'other-class))
-                                   (through-reldat (or (reldat through-class slot)
-                                                       (reldat through-class (sym (singularize slot))))))
-                              `(fetch-one (query ',other-class
-                                            (join ,(reverse-join-clause through-reldat))
-                                            (where ',(slot-value reldat 'foreign-key) (.id instance))
-                                            ,@(when order `((order ,order))))))
-                            `(fetch-one (query ',other-class
-                                          (where foreign-key (.id instance))
-                                          ,@(when order `((order ,order)))))))))))))
+                       (fetch-one
+                        (query ',other-class
+                          ,@(compute-throughable-join-clause class slot through)
+                          (where foreign-key (.id instance))
+                          ,@(when order `((order ,order))))))))))))
 
 (defmacro define-belongs-to
     (class slot

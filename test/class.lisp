@@ -24,7 +24,9 @@
 (defclass community (dbq:dao-mixin)
   ((name :initarg :name :accessor .name)
    (community-members :initarg :community-members :accessor .community-members)
-   (users :initarg :users :accessor .users)))
+   (users :initarg :users :accessor .users)
+   (entries :initarg :entries :accessor .entries)
+   (comments :initarg :comments :accessor .comments)))
 
 (defclass community-member (dbq:dao-mixin)
   ((role :initarg :role :accessor .role)
