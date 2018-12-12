@@ -2,7 +2,7 @@
 
 (defpackage :dbq
   (:use :cl :anaphora)
-  (:shadow #:count #:delete #:<= #:>= #:< #:>)
+  (:shadow #:count #:delete #:time #:<= #:>= #:< #:>)
   (:export
    ;; connection
    #:establish-connection
@@ -66,6 +66,13 @@
    #:location-lng
    #:make-location
    #:enable-read-geography-point
+
+   #:time
+   #:.hour
+   #:.minute
+   #:.second
+   #:.microsecond
+   #:time-from-string
 
    #:def-migration
    #:migrate

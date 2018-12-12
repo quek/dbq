@@ -7,6 +7,7 @@
                (:file "macro")
                (:file "util")
                (:file "format")
+               (:file "time")
                (:file "connection")
                (:file "relation")
                (:file "operator")

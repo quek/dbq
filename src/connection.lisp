@@ -38,6 +38,17 @@
     (cl-postgres:set-sql-datetime-readers :timestamp #'timestamp-reader
                                           :date #'date-reader)))
 
+(cl-postgres:set-sql-datetime-readers
+ :time
+ (lambda (usecs)
+   (multiple-value-bind (seconds usecs) (floor usecs 1000000)
+     (multiple-value-bind (minutes seconds) (floor seconds 60)
+       (multiple-value-bind (hours minutes) (floor minutes 60)
+         (make-instance 'time :hour hours
+                              :minute minutes
+                              :second seconds
+                              :microsecond usecs))))))
+
 (defun execute (sql)
   (log4cl:log-debug sql)
   (postmodern:query sql :str-alists))
