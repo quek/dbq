@@ -104,8 +104,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/ ~
                              join-clause
                              order)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (let* ((foreign-key ,(or foreign-key
-                              `(to-foreign-key ',class)))
+     (let* ((foreign-key ',(or foreign-key
+                               (to-foreign-key class)))
             (join-clause ,(or join-clause
                               (if through
                                   `(let* ((reldat (reldat ',class ',through))
@@ -154,8 +154,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                             join-clause
                             order)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (let* ((foreign-key ,(or foreign-key
-                              `(to-foreign-key ',class)))
+     (let* ((foreign-key ',(or foreign-key
+                               (to-foreign-key class)))
             (join-clause ,(or join-clause
                               (if through
                                   `(let* ((reldat (reldat ',class ',through))
@@ -217,7 +217,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                  (query ',other-class
                    (where ',primary-key (slot-value instance ',foreign-key))))
            (setf (slot-value instance slot-name)
-                 (if (persistedp instance)
+                 (if (and (slot-boundp instance ',foreign-key)
+                          (slot-value instance ',foreign-key))
                      (fetch-one (query ',other-class
                                   (where ',primary-key (slot-value instance ',foreign-key))
                                   (limit 1)))))))
