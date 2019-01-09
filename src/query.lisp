@@ -36,7 +36,9 @@
 (defun join (&rest join)
   (setf *query-builder* (copy-query-builder *query-builder*))
   (setf (query-builder-join *query-builder*)
-        (append (query-builder-join *query-builder*) join))
+        (remove-duplicates
+         (append (query-builder-join *query-builder*) join)
+         :test 'equal))
   *query-builder*)
 
 (defun where (&rest where)
