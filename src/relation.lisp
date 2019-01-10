@@ -337,16 +337,20 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
          (foreign-key (slot-value reldat 'foreign-key))
          (other-class (slot-value reldat 'other-class))
          (ids (delete-duplicates (loop for record in records
-                                       collect (slot-value record foreign-key))
-                                 :test #'equal))
-         (children (fetch (query other-class
-                            (where primary-key ids)))))
-    (loop for record in records
-          do (setf (slot-value record slot) nil))
-    (loop for record in records
-          for child = (find-if (lambda (child)
-                                 (equal (slot-value child primary-key)
-                                        (slot-value record foreign-key)))
-                               children)
-          do (setf (slot-value record slot) child))
-    (values children other-class)))
+                                       for id = (slot-value record foreign-key)
+                                       if (and id (not (eq id :null)))
+                                         collect id)
+                                 :test #'equal)))
+    (if ids
+        (let ((children (fetch (query other-class
+                                 (where primary-key ids)))))
+          (loop for record in records
+                do (setf (slot-value record slot) nil))
+          (loop for record in records
+                for child = (find-if (lambda (child)
+                                       (equal (slot-value child primary-key)
+                                              (slot-value record foreign-key)))
+                                     children)
+                do (setf (slot-value record slot) child))
+          (values children other-class))
+        (values nil other-class))))
