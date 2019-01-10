@@ -309,13 +309,18 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
          (ids (delete-duplicates (loop for record in records
                                        collect (slot-value record primary-key))
                                  :test #'equal))
-         (recordset (execute (sql (query other-class
-                                    (select (format nil "~/dbq::tbl/.~/dbq::col/, ~/dbq::tbl/.*"
-                                                    table foreign-key class))
-                                    (join (reverse-join-clause reldat))
-                                    (where foreign-key ids))))))
-
-
+         (recordset (execute
+                     (sql (query other-class
+                            (select (format nil "~/dbq::tbl/.~/dbq::col/, ~/dbq::tbl/.*"
+                                            table foreign-key other-class))
+                            (join (format nil "~
+inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
+                                          (slot-value reldat 'table)
+                                          (slot-value reldat 'table)
+                                          (slot-value reldat 'other-foreign-key)
+                                          (slot-value reldat 'other-class)
+                                          (slot-value reldat 'other-primary-key)))
+                            (where foreign-key ids))))))
     (let ((id_children (loop for ((_ . id) . row) in (nreverse recordset)
                              collect (cons id (car (store other-class (list row)))))))
       (loop for record in records
