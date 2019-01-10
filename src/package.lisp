@@ -52,6 +52,7 @@
    #:page
    #:per-page
    #:preload
+   #:load-relations
    #:sql
 
    #:<=

@@ -241,3 +241,9 @@
             (multiple-value-bind (records2 class2) (%preload records class (list (car x)))
               (%preload records2 class2 (cdr x)))
             (%preload records class (cdr slots)))))))
+
+(defun load-relations (records &rest slots)
+  (let ((records (alexandria:ensure-list records)))
+    (when records
+      (let ((class (class-name (class-of (car records)))))
+        (%preload records class slots)))))
