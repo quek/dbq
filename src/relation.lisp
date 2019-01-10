@@ -218,7 +218,8 @@ inner join ~/dbq::tbl/ on ~/dbq::tbl/.~/dbq::col/=~/dbq::tbl/.~/dbq::col/"
                    (where ',primary-key (slot-value instance ',foreign-key))))
            (setf (slot-value instance slot-name)
                  (if (and (slot-boundp instance ',foreign-key)
-                          (slot-value instance ',foreign-key))
+                          (slot-value instance ',foreign-key)
+                          (not (eq (slot-value instance ',foreign-key) :null)))
                      (fetch-one (query ',other-class
                                   (where ',primary-key (slot-value instance ',foreign-key))
                                   (limit 1)))))))
