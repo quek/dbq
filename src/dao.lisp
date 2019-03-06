@@ -1,16 +1,16 @@
 (in-package :dbq)
 
 (defclass id-mixin ()
-  ((id :initarg :id :accessor id-of)))
+  ((id :initarg :id :accessor .id)))
 
 (defmethod id= ((a id-mixin) (b id-mixin))
-  (= (id-of a) (id-of b)))
+  (equal (.id a) (.id b)))
 
 (defclass created-at-mixin ()
-  ((created-at :initarg :created-at :accessor created-at)))
+  ((created-at :initarg :created-at :accessor .created-at)))
 
 (defclass updated-at-mixin ()
-  ((updated-at :initarg :updated-at :accessor updated-at)))
+  ((updated-at :initarg :updated-at :accessor .updated-at)))
 
 (defclass dao-mixin (id-mixin created-at-mixin updated-at-mixin)
   ())
@@ -31,17 +31,16 @@
                 (char/= #\% (char (symbol-name (sb-pcl:slot-definition-name slot)) 0)))
           collect slot))
 
-(defun normal-column-p (record slot-name)
-  (and (not (hbtm-slot-p record slot-name))
-       (not (has-many-slot-p record slot-name))
-       (not (belongs-to-slot-p record slot-name))))
+(defun normal-column-p (class slot-name)
+  (not (reldat class slot-name)))
 
 (defun insert-columns-values (record)
-  (loop for slot in (column-slots record)
+  (loop with class = (class-name (class-of record))
+        for slot in (column-slots record)
         for slot-name = (sb-pcl:slot-definition-name slot)
         if (and (slot-boundp record slot-name)
                 (string-not-equal "id" slot-name)
-                (normal-column-p record slot-name))
+                (normal-column-p class slot-name))
           collect slot-name into columns
           and
             collect (slot-value record slot-name) into values
@@ -49,12 +48,13 @@
 
 
 (defun update-set (record)
-  (loop for slot in (column-slots record)
+  (loop with class = (class-name (class-of record))
+        for slot in (column-slots record)
         for slot-name = (sb-pcl:slot-definition-name slot)
         if (and (slot-boundp record slot-name)
                 (not (eq 'id slot-name))
                 (not (eq 'created-at slot-name))
-                (normal-column-p record slot-name))
+                (normal-column-p class slot-name))
           append (list slot-name
                        (slot-value record slot-name))))
 

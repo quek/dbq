@@ -1,7 +1,5 @@
 (in-package :dbq)
 
-(defvar *query-builder* nil)
-
 (defstruct query-builder
   select
   from
@@ -15,6 +13,9 @@
   page
   (per-page 10)
   preload)
+
+(defmethod to-sql-value ((query-builder query-builder))
+  (format nil "(~a)" (sql query-builder)))
 
 (defgeneric to-query-builder (x)
   (:method ((x query-builder))
@@ -35,10 +36,13 @@
 (defun join (&rest join)
   (setf *query-builder* (copy-query-builder *query-builder*))
   (setf (query-builder-join *query-builder*)
-        (append (query-builder-join *query-builder*) join))
+        (remove-duplicates
+         (append (query-builder-join *query-builder*) join)
+         :test 'equal))
   *query-builder*)
 
 (defun where (&rest where)
+  (declare (special *query-builder*))
   (setf *query-builder* (copy-query-builder *query-builder*))
   (push where (query-builder-where *query-builder*))
   *query-builder*)
@@ -105,7 +109,10 @@
 
 (defun count-sql (query-builder)
   (with-output-to-string (out)
-    (write-string "select count(*)" out)
+    (if (query-builder-group query-builder)
+        (format out "select count(*), ~{~/dbq::col/~^ ,~}"
+                (alexandria:ensure-list (query-builder-group query-builder)))
+        (write-string "select count(*)" out))
     (build-from query-builder out)
     (build-join query-builder out)
     (build-where query-builder out)
@@ -116,7 +123,9 @@
   (let ((select (query-builder-select query-builder))
         (class (query-builder-from query-builder)))
     (cond (select
-           (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list select)))
+           (if (stringp select)
+               (format out "~a" select)
+               (format out "~{~/dbq::col/~^ ,~}" (alexandria:ensure-list select))))
           ((query-builder-group query-builder)
            (format out "~/dbq::tbl/.*" class))
           ((query-builder-join query-builder)
@@ -129,38 +138,53 @@
 
 (defun build-join (query-builder out)
   (let ((class (query-builder-from query-builder)))
-   (loop for join in (query-builder-join query-builder)
-         for join-clause = (or (hbtm-join-clause class join)
-                               (has-many-join-clause class join)
-                               (belongs-to-join-clause class join))
-         if join-clause
-           do (write-char #\space out)
-              (write-string join-clause out))))
+    (%build-join class (query-builder-join query-builder) out)))
+
+(defun %build-join (class joins out)
+  (when joins
+    (let ((x (car joins)))
+      (cond ((stringp x)
+             (write-char #\space out)
+             (write-string x out)
+             (%build-join class (cdr joins) out))
+            ((symbolp x)
+             (write-char #\space out)
+             (write-string (slot-value (reldat class x) 'join-clause) out)
+             (%build-join class (cdr joins) out))
+            (t
+             (let* ((xx (car x))
+                    (reldat (reldat class xx)))
+               (write-char #\space out)
+               (write-string (slot-value reldat 'join-clause) out)
+               (%build-join (slot-value reldat 'other-class) (cdr x) out)
+               (%build-join class (cdr joins) out)))))))
 
 (defun build-where (query-builder out)
   (let ((wheres (query-builder-where query-builder)))
     (when wheres
-      (format out " where ~{~a~^ and ~}"
-              (loop for where in wheres
-                    if (null (cdr where))
-                      append where
-                    else
-                      append (loop for (col val) on where by #'cddr
-                                   collect (if (atom val)
-                                               (format nil "~/dbq::col/ = ~/dbq::val/" col val)
-                                               (format nil "~/dbq::col/ in ~/dbq::val/" col val))))))))
+      (format
+       out " where ~{~a~^ and ~}"
+       (loop for where in wheres
+             if (null (cdr where))
+               append where
+             else
+               append
+               (loop for (col val) on where by #'cddr
+                     collect (cond ((typep val 'operator)
+                                    (format nil "~/dbq::col/ ~a ~/dbq::val/"
+                                            col
+                                            (operator-of val)
+                                            (operand-of val)))
+                                   ((or (consp val)
+                                        (query-builder-p val))
+                                    (format nil "~/dbq::col/ in ~/dbq::val/" col val))
+                                   (t
+                                    (format nil "~/dbq::col/ = ~/dbq::val/" col val)))))))))
 
 (defun build-group (query-builder out)
   (let ((group (query-builder-group query-builder)))
     (when group
       (format out " group by ~{~/dbq::col/~^ ,~}" (alexandria:ensure-list group)))))
-
-(defmacro query (query-builder &body body)
-  `(let* ((*query-builder* t)
-          (*query-builder* (to-query-builder ,query-builder)))
-     (declare (special *query-builder*))
-     ,@body
-     *query-builder*))
 
 (defun set-value (object value column)
   (let ((slot (find (to-column-name column) (sb-mop:class-slots (class-of object))
@@ -169,7 +193,7 @@
     (if slot
         (setf (slot-value object (sb-mop:slot-definition-name slot))
               value)
-        (format t "no slot for ~a ~a" column value))))
+        (warn "no slot for column: ~a value: ~a!" column value))))
 
 (defun store (class rows)
   (loop for alist in rows
@@ -179,19 +203,47 @@
                   object)))
 
 (defun fetch-one (query &key (class (query-builder-from query)))
-  (car (store class (execute (sql (query query (limit 1)))))))
+  (let ((results (store class (execute (sql (query query (limit 1)))))))
+    (when (and results (query-builder-preload query))
+      (%preload results (query-builder-from query) (query-builder-preload query)))
+    (car results)))
 
 (defun fetch (query &key (class (query-builder-from query)))
   (let ((results (store class (execute (sql query)))))
     (when (and results (query-builder-preload query))
-      (preload-has-many results query)
-      (preload-hbtm results query)
-      (preload-belongs-to results query))
+      (%preload results (query-builder-from query) (query-builder-preload query)))
     results))
 
-(defun find-by (class &rest conditions)
-  (let ((query (query class (apply #'where conditions))))
-   (fetch-one query :class (query-builder-from query))))
+(defmacro find-by (class &rest conditions)
+  `(fetch-one (query ,class ,@(awhen conditions
+                                `((where ,@it))))))
 
 (defun count (query)
-  (cdaar (execute (count-sql query))))
+  (let ((result (execute (count-sql query))))
+    (if (query-builder-group query)
+        (loop for ((_ . count) . groups) in result
+              collect (cons
+                       (if (= (length groups) 1)
+                           (cdar groups)
+                           (mapcar #'cdr groups))
+                       count))
+        (cdaar result))))
+
+(defun %preload (records class slots)
+  (when (and records slots)
+    (let ((x (car slots)))
+      (if (atom x)
+          (let ((reldat (reldat class x)))
+            (multiple-value-bind (records2 class2) (reldat-preload reldat records class x)
+              (%preload records class (cdr slots))
+              (values records2 class2)))
+          (progn
+            (multiple-value-bind (records2 class2) (%preload records class (list (car x)))
+              (%preload records2 class2 (cdr x)))
+            (%preload records class (cdr slots)))))))
+
+(defun load-relations (records &rest slots)
+  (let ((records (alexandria:ensure-list records)))
+    (when records
+      (let ((class (class-name (class-of (car records)))))
+        (%preload records class slots)))))

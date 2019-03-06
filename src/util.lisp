@@ -9,7 +9,7 @@
                (len (length string))
                (last-char-raw (char string (1- len)))
                (last-char (char-upcase last-char-raw))
-               (penult-char (char-upcase (if (> len 1)
+               (penult-char (char-upcase (if (cl:> len 1)
                                              (char string (- len 2))
                                              #\Nul))) ;dummy
                (last-3 (subseq string (max 0 (- len 3)))))
@@ -129,18 +129,23 @@
   (:method ((x local-time:timestamp))
     (local-time:format-timestring
      nil x :format '(#\'
-                     :year #\/ :month #\/ :day
+                     (:year 4) #\/ (:month 2) #\/ (:day 2)
                      #\space
-                     :hour #\: :min #\: :sec
+                     (:hour 2) #\: (:min 2) #\: (:sec 2)
                      #\')))
   (:method ((x list))
     (format nil "(~{~/dbq::val/~^, ~})" x))
   (:method ((location location))
-    (if (and (numberp (location-lng location) )
-             (numberp (location-lat location)))
-        (format nil "ST_GeographyFromText('SRID=4326;POINT(~f ~f)')"
-                (location-lng location) (location-lat location))
-        (error "Invalid location value ~a!" location)))
+    (cond ((and (stringp (location-lng location))
+                (stringp (location-lat location)))
+           (format nil "ST_GeographyFromText('SRID=4326;POINT(~a ~a)')"
+                   (location-lng location) (location-lat location)))
+          ((and (numberp (location-lng location))
+                (numberp (location-lat location)))
+           (format nil "ST_GeographyFromText('SRID=4326;POINT(~f ~f)')"
+                   (location-lng location) (location-lat location)))
+          (t
+           (error "Invalid location value ~a!" location))))
   (:method ((x (eql t)))
     "'t'")
   (:method ((x null))
@@ -148,5 +153,6 @@
   (:method ((x (eql :null)))
     "null"))
 
-(defun to-foreign-key-column (x)
-  (str (to-column-name x) "_id"))
+(defgeneric to-foreign-key (x)
+  (:method  (x)
+    (sym x "-ID")))

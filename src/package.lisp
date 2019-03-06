@@ -2,7 +2,7 @@
 
 (defpackage :dbq
   (:use :cl :anaphora)
-  (:shadow #:count #:delete)
+  (:shadow #:count #:delete #:time #:<= #:>= #:< #:>)
   (:export
    ;; connection
    #:establish-connection
@@ -18,17 +18,23 @@
    #:updated-at-mixin
    #:dao-mixin
    #:id
-   #:id-of
+   #:.id
    #:id=
    #:created-at
+   #:.created-at
    #:updated-at
+   #:.updated-at
    #:has-many
    #:save
+   #:create
+   #:update
+   #:delete
    #:find-by
 
-   #:def-hbtm
-   #:def-has-many
-   #:def-belongs-to
+   #:define-hbtm
+   #:define-has-many
+   #:define-has-one
+   #:define-belongs-to
 
    ;;
    #:fetch-one
@@ -46,7 +52,15 @@
    #:page
    #:per-page
    #:preload
+   #:load-relations
    #:sql
+
+   #:<=
+   #:>=
+   #:<
+   #:>
+
+   #:to-foreign-key
 
    #:location
    #:location-lat
@@ -54,9 +68,14 @@
    #:make-location
    #:enable-read-geography-point
 
+   #:time
+   #:.hour
+   #:.minute
+   #:.second
+   #:.microsecond
+   #:time-from-string
+
    #:def-migration
    #:migrate
    #:migrate-down
-
-   #:json
    ))

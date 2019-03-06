@@ -4,16 +4,20 @@
   :serial t
   :pathname "src/"
   :components ((:file "package")
+               (:file "macro")
                (:file "util")
                (:file "format")
+               (:file "time")
                (:file "connection")
+               (:file "relation")
+               (:file "operator")
                (:file "query")
                (:file "dao")
                (:file "hbtm")
                (:file "has-many")
                (:file "belongs-to")
-               (:file "migration")
-               (:file "json"))
+               (:file "has-one")
+               (:file "migration"))
   :depends-on (#:alexandria
                #:postmodern
                #:closer-mop
@@ -22,6 +26,5 @@
                #:local-time
                #:fast-io
                #:ieee-floats
-               #:cl-json
                #:log4cl))
 
