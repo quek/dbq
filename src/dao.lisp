@@ -27,7 +27,8 @@
 
 (defun column-slots (record)
   (loop for slot in (sb-pcl:class-slots (class-of record))
-        if (eq (sb-pcl:slot-definition-allocation slot) :instance)
+        if (and (eq (sb-pcl:slot-definition-allocation slot) :instance)
+                (char/= #\% (char (symbol-name (sb-pcl:slot-definition-name slot)) 0)))
           collect slot))
 
 (defun normal-column-p (record slot-name)
