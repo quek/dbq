@@ -35,7 +35,8 @@ version varchar(255) primary key
       (execute (format nil "insert into migrations values (~/dbq::val/)" (symbol-name version)))
       (funcall up))))
 
-(defmacro def-migration (name up down)
+(defmacro define-migration (name option up down)
+  (declare (ignore option))
   (let ((package (gensym)))
     `(let ((,package (symbol-package ',name)))
        (unless (gethash ,package *migrations*)

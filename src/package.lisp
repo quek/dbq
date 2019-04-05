@@ -61,6 +61,7 @@
    #:>
 
    #:to-foreign-key
+   #:to-sql-value
 
    #:location
    #:location-lat
@@ -75,7 +76,7 @@
    #:.microsecond
    #:time-from-string
 
-   #:def-migration
+   #:define-migration
    #:migrate
    #:migrate-down
    ))
